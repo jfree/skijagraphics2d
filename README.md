@@ -5,7 +5,9 @@ Version 1.0.0-SNAPSHOT, 17 July 2021
 
 Overview
 --------
-**SkijaGraphics2D** is a free implementation of Java2D's `Graphics2D` API that targets Skia via the Skija bindings.
+**SkijaGraphics2D** is a free implementation of Java2D's `Graphics2D` API that targets Skia via the [Skija](https://github.com/JetBrains/skija) bindings.
+
+The following sample is created using [Orson Charts](https://github.com/jfree/orson-charts):
 
 ![SkijaGraphics2D sample](sample.png)
 
