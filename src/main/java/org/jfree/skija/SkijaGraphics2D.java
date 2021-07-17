@@ -1679,28 +1679,6 @@ public class SkijaGraphics2D extends Graphics2D {
         return result;
     }
 
-    private static void makeJava2DImage() throws IOException {
-        BufferedImage img = new BufferedImage(400, 300, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        drawStrokedLine(g2);
-        drawLinearGradient(g2);
-        ImageIO.write(img, "png", new File("java2d.png"));
-    }
-
-    private static void drawLinearGradient(Graphics2D g2) {
-        float[] fractions = new float[] { 0.0f, 0.25f, 0.5f, 1.0f };
-        Color[] colors = new Color[] { Color.GREEN, Color.YELLOW, Color.RED, Color.BLUE};
-        LinearGradientPaint lgp = new LinearGradientPaint(5.0f, 10.0f, 200.0f, 210.0f, fractions, colors);
-        g2.setPaint(lgp);
-        g2.fill(new Rectangle2D.Double(5.0, 10.0, 195.0, 200));
-    }
-
-    private static void drawStrokedLine(Graphics2D g2) {
-        float[] dash = new float[] { 15.0f, 8.0f };
-        g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 4.0f, dash, 4.0f));
-        g2.drawLine(5, 5, 190, 190);
-    }
-
     private static org.jetbrains.skija.Image convertToSkijaImage(Image image) {
         int w = image.getWidth(null);
         int h = image.getHeight(null);
@@ -1720,37 +1698,5 @@ public class SkijaGraphics2D extends Graphics2D {
         ImageInfo imageInfo = new ImageInfo(w, h, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
         org.jetbrains.skija.Image skijaImage = org.jetbrains.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4);
         return skijaImage;
-    }
-
-    public static void main(String[] args) {
-        SkijaGraphics2D g2 = new SkijaGraphics2D(800, 500);
-        drawStrokedLine(g2);
-        drawLinearGradient(g2);
-        org.jetbrains.skija.Image image = g2.getSurface().makeImageSnapshot();
-//        Surface surface = Surface.makeRasterN32Premul(400, 400);
-//        Canvas canvas = surface.getCanvas();
-//
-//        org.jetbrains.skija.Paint paint = new org.jetbrains.skija.Paint();
-//        paint.setColor(0x77FF33FF);
-//        canvas.drawCircle(50, 50, 30, paint);
-//        canvas.drawLine(0.0f, 0.0f, 400.0f, 300.0f, paint);
-//        // draw a string
-//        Typeface typeface = Typeface.makeDefault();
-//        org.jetbrains.skija.Font font = new org.jetbrains.skija.Font(typeface, 12);
-//        canvas.drawString("Rotation", 300,  200, font, paint);
-//        canvas.rotate(45.0f);
-//        canvas.drawString("Rotation", 300,  200, font, paint);
-//        org.jetbrains.skija.Image image = surface.makeImageSnapshot();
-        Data pngData = image.encodeToData(EncodedImageFormat.PNG);
-        byte [] pngBytes = pngData.getBytes();
-
-        try {
-            java.nio.file.Path path = java.nio.file.Path.of("test.png");
-            java.nio.file.Files.write(path, pngBytes);
-            makeJava2DImage();
-        }
-        catch (IOException e) {
-            System.out.println(e);
-        }
     }
 }
