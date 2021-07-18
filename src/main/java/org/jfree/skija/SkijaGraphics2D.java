@@ -957,6 +957,20 @@ public class SkijaGraphics2D extends Graphics2D {
         return this.awtFont;
     }
 
+    private FontStyle awtFontStyleToSkijaFontStyle(int style) {
+        if (style == Font.PLAIN) {
+            return FontStyle.NORMAL;
+        } else if (style == Font.BOLD) {
+            return FontStyle.BOLD;
+        } else if (style == Font.ITALIC) {
+            return FontStyle.ITALIC;
+        } else if (style == Font.BOLD + Font.ITALIC) {
+            return FontStyle.BOLD_ITALIC;
+        } else {
+            return FontStyle.NORMAL;
+        }
+    }
+
     /**
      * Sets the font to be used for drawing text.
      *
@@ -970,7 +984,7 @@ public class SkijaGraphics2D extends Graphics2D {
             return;
         }
         this.awtFont = font;
-        this.typeface = Typeface.makeFromName(font.getFontName(), FontStyle.NORMAL);
+        this.typeface = Typeface.makeFromName(font.getFontName(), awtFontStyleToSkijaFontStyle(font.getStyle()));
         this.skijaFont = new org.jetbrains.skija.Font(typeface, font.getSize());
     }
 
