@@ -863,7 +863,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Graphics create() {
-        SkijaGraphics2D copy = new SkijaGraphics2D(this.surface.getWidth(), this.surface.getHeight());
+        SkijaGraphics2D copy = new SkijaGraphics2D(this.canvas);
         copy.setRenderingHints(getRenderingHints());
         copy.setClip(getClip());
         copy.setPaint(getPaint());
