@@ -39,7 +39,6 @@ import org.jetbrains.skija.Canvas;
 import org.jetbrains.skija.Point;
 import org.jetbrains.skija.*;
 
-import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -52,8 +51,6 @@ import java.awt.font.TextLayout;
 import java.awt.geom.*;
 import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
-import java.io.File;
-import java.io.IOException;
 import java.text.AttributedCharacterIterator;
 import java.util.Arrays;
 import java.util.Hashtable;
