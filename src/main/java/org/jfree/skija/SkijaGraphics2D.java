@@ -69,7 +69,8 @@ public class SkijaGraphics2D extends Graphics2D {
     private Canvas canvas;
     
     /** Rendering hints. */
-    private final RenderingHints hints;
+    private final RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
+            RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
     private org.jetbrains.skija.Paint skijaPaint;
     
@@ -162,13 +163,31 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     public SkijaGraphics2D(int width, int height) {
         this.surface = Surface.makeRasterN32Premul(width, height);
-        this.canvas = surface.getCanvas();
+        init(surface.getCanvas());
+    }
+
+    /**
+     * Creates a new instance with the specified height and width using an existing
+     * canvas.
+     *
+     * @param canvas  the canvas ({@code null} not permitted).
+     */
+    public SkijaGraphics2D(Canvas canvas) {
+        init(canvas);
+    }
+
+    /**
+     * Creates a new instance using an existing canvas.
+     *
+     * @param canvas  the canvas ({@code null} not permitted).
+     */
+    private void init(Canvas canvas) {
+        nullNotPermitted(canvas, "canvas");
+        this.canvas = canvas;
         this.skijaPaint = new org.jetbrains.skija.Paint().setColor(0xFF000000);
         this.awtFont = new Font(Font.DIALOG, 10, Font.PLAIN);
         this.typeface = Typeface.makeFromName(this.awtFont.getFontName(), FontStyle.NORMAL);
         this.skijaFont = new org.jetbrains.skija.Font(typeface, 12);
-        this.hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
     
     public Surface getSurface() {
