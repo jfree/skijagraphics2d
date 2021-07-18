@@ -554,12 +554,12 @@ public class SkijaGraphics2D extends Graphics2D {
     }
 
     /**
-     * Maps a line cap code from AWT to the corresponding Skija PaintStrokeCap
+     * Maps a line cap code from AWT to the corresponding Skija {@code PaintStrokeCap}
      * enum value.
      * 
      * @param c  the line cap code.
      * 
-     * @return A JavaFX line cap value. 
+     * @return A Skija stroke cap value.
      */
     private PaintStrokeCap awtToSkijaLineCap(int c) {
         if (c == BasicStroke.CAP_BUTT) {
@@ -574,12 +574,12 @@ public class SkijaGraphics2D extends Graphics2D {
     }
  
     /**
-     * Maps a line join code from AWT to the corresponding JavaFX 
-     * PaintStrokeJoin enum value.
+     * Maps a line join code from AWT to the corresponding Skija
+     * {@code PaintStrokeJoin} enum value.
      * 
      * @param j  the line join code.
      * 
-     * @return A JavaFX line join value. 
+     * @return A Skija stroke join value.
      */
     private PaintStrokeJoin awtToSkijaLineJoin(int j) {
         if (j == BasicStroke.JOIN_BEVEL) {
