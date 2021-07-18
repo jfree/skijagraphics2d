@@ -185,7 +185,6 @@ public class SkijaGraphics2D extends Graphics2D {
         nullNotPermitted(canvas, "canvas");
         this.canvas = canvas;
         this.skijaPaint = new org.jetbrains.skija.Paint().setColor(0xFF000000);
-        this.awtFont = new Font(Font.DIALOG, 10, Font.PLAIN);
         this.typeface = Typeface.makeFromName(this.awtFont.getFontName(), FontStyle.NORMAL);
         this.skijaFont = new org.jetbrains.skija.Font(typeface, 12);
     }
@@ -510,8 +509,8 @@ public class SkijaGraphics2D extends Graphics2D {
             for (int i = 0; i < rgp.getColors().length; i++) {
                 colors[i] = rgp.getColors()[i].getRGB();
             }
-            //Shader shader = Shader.makeRadialGradient(x, y, zzz, colors);
-            //this.skijaPaint.setShader(shader); FIXME
+            Shader shader = Shader.makeRadialGradient(x, y, rgp.getRadius(), colors);
+            this.skijaPaint.setShader(shader);
         } else if (paint instanceof GradientPaint) {
             GradientPaint gp = (GradientPaint) paint;
             Point p1 = new Point((float) gp.getPoint1().getX(), (float) gp.getPoint1().getY());
@@ -1712,7 +1711,7 @@ public class SkijaGraphics2D extends Graphics2D {
             bytes[i * 4] = (byte) (p & 0xFF);
         }
         ImageInfo imageInfo = new ImageInfo(w, h, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
-        org.jetbrains.skija.Image skijaImage = org.jetbrains.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4);
-        return skijaImage;
+        return org.jetbrains.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4);
     }
+
 }
