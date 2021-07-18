@@ -487,7 +487,7 @@ public class SkijaGraphics2D extends Graphics2D {
         if (paint instanceof Color) {
             Color c = (Color) paint;
             this.color = c;
-            this.skijaPaint.setARGB(c.getAlpha(), c.getRed(), c.getGreen(), c.getBlue());
+            this.skijaPaint.setShader(Shader.makeColor(c.getRGB()));
         } else if (paint instanceof LinearGradientPaint) {
             LinearGradientPaint lgp = (LinearGradientPaint) paint;
             float x0 = (float) lgp.getStartPoint().getX();
