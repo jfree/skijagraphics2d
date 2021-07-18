@@ -499,7 +499,8 @@ public class SkijaGraphics2D extends Graphics2D {
                 colors[i] = lgp.getColors()[i].getRGB();
             }
             float[] fractions = lgp.getFractions();
-            Shader shader = Shader.makeLinearGradient(x0, y0, x1, y1, colors, fractions);
+            GradientStyle gs = GradientStyle.DEFAULT.withTileMode(awtCycleMethodToSkijaFilterTileMode(lgp.getCycleMethod()));
+            Shader shader = Shader.makeLinearGradient(x0, y0, x1, y1, colors, fractions, gs);
             this.skijaPaint.setShader(shader);
         } else if (paint instanceof RadialGradientPaint) {
             RadialGradientPaint rgp = (RadialGradientPaint) paint;
@@ -509,7 +510,8 @@ public class SkijaGraphics2D extends Graphics2D {
             for (int i = 0; i < rgp.getColors().length; i++) {
                 colors[i] = rgp.getColors()[i].getRGB();
             }
-            Shader shader = Shader.makeRadialGradient(x, y, rgp.getRadius(), colors);
+            GradientStyle gs = GradientStyle.DEFAULT.withTileMode(awtCycleMethodToSkijaFilterTileMode(rgp.getCycleMethod()));
+            Shader shader = Shader.makeRadialGradient(x, y, rgp.getRadius(), colors, rgp.getFractions(), gs);
             this.skijaPaint.setShader(shader);
         } else if (paint instanceof GradientPaint) {
             GradientPaint gp = (GradientPaint) paint;
@@ -590,6 +592,23 @@ public class SkijaGraphics2D extends Graphics2D {
             return PaintStrokeJoin.ROUND;
         } else {
             throw new IllegalArgumentException("Unrecognised join code: " + j);            
+        }
+    }
+
+    /**
+     * Maps a linear gradient paint cycle method from AWT to the corresponding Skija
+     * {@code FilterTileMode} enum value.
+     *
+     * @param method  the cycle method.
+     *
+     * @return A Skija stroke join value.
+     */
+    private FilterTileMode awtCycleMethodToSkijaFilterTileMode(MultipleGradientPaint.CycleMethod method) {
+        switch (method) {
+            case NO_CYCLE: return FilterTileMode.CLAMP;
+            case REPEAT: return FilterTileMode.REPEAT;
+            case REFLECT: return FilterTileMode.MIRROR;
+            default: return FilterTileMode.CLAMP;
         }
     }
 
