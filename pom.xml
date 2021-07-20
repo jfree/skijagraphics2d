@@ -10,7 +10,37 @@
         <maven.compiler.source>15</maven.compiler.source>
         <maven.compiler.target>15</maven.compiler.target>
     </properties>
-    
+
+    <profiles>
+        <profile>
+            <id>build-mac</id>
+            <activation>
+                <os><family>mac</family></os>
+            </activation>
+            <properties>
+                <skija.platform>macos-x64</skija.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>build-linux</id>
+            <activation>
+                <os><family>linux</family></os>
+            </activation>
+            <properties>
+                <skija.platform>linux</skija.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>build-windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <properties>
+                <skija.platform>windows</skija.platform>
+            </properties>
+        </profile>
+    </profiles>
+
     <repositories>
         <repository>
             <id>space-maven</id>
@@ -21,7 +51,7 @@
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.skija</groupId>
-            <artifactId>skija-macos-x64</artifactId>
+            <artifactId>skija-${skija.platform}</artifactId>
             <version>0.92.15</version>
         </dependency>
         <dependency>
