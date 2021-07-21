@@ -11,6 +11,24 @@
         <maven.compiler.target>15</maven.compiler.target>
     </properties>
 
+    <name>SkijaGraphics2D</name>
+    <url>http://github.com/jfree/skijagraphics2d</url>
+    <description>A bridge from Java2D to Skia via the Skija bindings.</description>
+
+    <scm>
+        <url>https://github.com/jfree/skijagraphics2d</url>
+        <connection>scm:git:git://github.com/jfree/skijagraphics2d.git</connection>
+        <developerConnection>scm:git:git@github.com:jfree/skijagraphics2d.git</developerConnection>
+    </scm>
+
+    <developers>
+        <developer>
+            <email>dave@jfree.org</email>
+            <name>David Gilbert</name>
+            <url>https://github.com/jfree</url>
+        </developer>
+    </developers>
+
     <profiles>
         <profile>
             <id>build-mac</id>
@@ -67,6 +85,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -106,6 +125,20 @@
                     <docfilessubdirs>true</docfilessubdirs>
                     <linksource>true</linksource>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-help-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>show-profiles</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>active-profiles</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
