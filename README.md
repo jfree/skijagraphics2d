@@ -1,7 +1,7 @@
 SkijaGraphics2D
 ===============
 
-Version 1.0.0-SNAPSHOT, 17 July 2021
+Version 1.0.0, 21 July 2021
 
 Overview
 --------
@@ -11,10 +11,19 @@ The following sample is created using [Orson Charts](https://github.com/jfree/or
 
 ![SkijaGraphics2D sample](sample.png)
 
+Include
+-------
+To include `FXGraphics2D` in your own project, add the following Maven dependency:
+
+        <dependency>
+            <groupId>org.jfree</groupId>
+            <artifactId>org.jfree.skijagraphics2d</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
 Build
 -----
-You can build `SkijaGraphics2D` from sources using Maven (note that first you should amend the pom.xml to choose 
-the Skija bindings for your native platform):
+You can build `SkijaGraphics2D` from sources using Maven:
 
     mvn clean install
 
@@ -53,3 +62,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
+
+History
+-------
+##### 21-Jul-2021 : Version 1.0.0
+- initial public release.
