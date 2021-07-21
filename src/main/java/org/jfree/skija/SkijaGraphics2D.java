@@ -356,6 +356,7 @@ public class SkijaGraphics2D extends Graphics2D {
         if (str == null) {
             throw new NullPointerException("Null 'str' argument.");
         }
+        this.skijaPaint.setMode(PaintMode.FILL);
         this.canvas.drawString(str, x, y, this.skijaFont, this.skijaPaint);
     }
 
