@@ -13,7 +13,7 @@ The following sample is created using [Orson Charts](https://github.com/jfree/or
 
 Include
 -------
-To include `FXGraphics2D` in your own project, add the following Maven dependency:
+To include `SkijaGraphics2D` in your own project, add the following Maven dependency:
 
         <dependency>
             <groupId>org.jfree</groupId>
