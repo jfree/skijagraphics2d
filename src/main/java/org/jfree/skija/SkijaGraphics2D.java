@@ -188,7 +188,12 @@ public class SkijaGraphics2D extends Graphics2D {
         this.typeface = Typeface.makeFromName(this.awtFont.getFontName(), FontStyle.NORMAL);
         this.skijaFont = new org.jetbrains.skija.Font(typeface, 12);
     }
-    
+
+    /**
+     * Returns the Skija surface that was created by this instance, or {@code null}.
+     *
+     * @return The Skija surface (possibly {@code null}).
+     */
     public Surface getSurface() {
         return this.surface;
     }
