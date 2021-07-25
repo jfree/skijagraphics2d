@@ -38,6 +38,8 @@ package org.jfree.skija;
 import org.jetbrains.skija.Canvas;
 import org.jetbrains.skija.Point;
 import org.jetbrains.skija.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -58,6 +60,8 @@ import java.util.*;
  * An implementation of the Graphics2D API that targets the Skija graphics API.
  */
 public class SkijaGraphics2D extends Graphics2D {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SkijaGraphics2D.class);
 
     /** Surface from Skija */
     private Surface surface;
@@ -172,6 +176,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param canvas  the canvas ({@code null} not permitted).
      */
     public SkijaGraphics2D(Canvas canvas) {
+        LOGGER.debug("SkijaGraphics2D(Canvas) constructor.");
         init(canvas);
     }
 
@@ -244,6 +249,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void draw(Shape s) {
+        LOGGER.debug("draw(Shape) : " + s);
         this.skijaPaint.setMode(PaintMode.STROKE);
         if (s instanceof Line2D) {
             Line2D l = (Line2D) s;
@@ -482,6 +488,7 @@ public class SkijaGraphics2D extends Graphics2D {
 
     @Override
     public void setPaint(Paint paint) {
+        LOGGER.debug("setPaint(Paint) : " + paint);
         if (paint == null) {
             return;
         }
@@ -520,10 +527,16 @@ public class SkijaGraphics2D extends Graphics2D {
             this.skijaPaint.setShader(shader);
         } else if (paint instanceof GradientPaint) {
             GradientPaint gp = (GradientPaint) paint;
-            Point p1 = new Point((float) gp.getPoint1().getX(), (float) gp.getPoint1().getY());
-            Point p2 = new Point((float) gp.getPoint2().getX(), (float) gp.getPoint2().getY());
+            float x1 = (float) gp.getPoint1().getX();
+            float y1 = (float) gp.getPoint1().getY();
+            float x2 = (float) gp.getPoint2().getX();
+            float y2 = (float) gp.getPoint2().getY();
             int[] colors = new int[] { gp.getColor1().getRGB(), gp.getColor2().getRGB()};
-            Shader shader = Shader.makeLinearGradient(p1, p2, colors);
+            GradientStyle gs = GradientStyle.DEFAULT;
+            if (gp.isCyclic()) {
+                gs = GradientStyle.DEFAULT.withTileMode(FilterTileMode.MIRROR);
+            }
+            Shader shader = Shader.makeLinearGradient(x1, y1, x2, y2, colors, (float[])null, gs);
             this.skijaPaint.setShader(shader);
         }
     }
@@ -926,6 +939,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setColor(Color c) {
+        LOGGER.debug("setColor(Color) : " + c);
         if (c == null || c.equals(this.color)) {
             return;
         }
