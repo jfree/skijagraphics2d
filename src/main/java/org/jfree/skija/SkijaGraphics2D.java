@@ -36,7 +36,6 @@
 package org.jfree.skija;
 
 import org.jetbrains.skija.Canvas;
-import org.jetbrains.skija.Point;
 import org.jetbrains.skija.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -433,7 +432,12 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void fill(Shape s) {
         this.skijaPaint.setMode(PaintMode.FILL);
-        this.canvas.drawPath(path(s), this.skijaPaint);
+        if (s instanceof Rectangle2D) {
+            Rectangle2D r = (Rectangle2D) s;
+            this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
+        } else {
+            this.canvas.drawPath(path(s), this.skijaPaint);
+        }
     }
 
     /**
