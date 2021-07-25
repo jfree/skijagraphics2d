@@ -52,10 +52,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * An implementation of the Graphics2D API that targets the Skija graphics API.
@@ -97,7 +94,9 @@ public class SkijaGraphics2D extends Graphics2D {
 
     /** The user clip (can be null). */
     private Shape clip;
-    
+
+    private final Map<TypefaceKey, Typeface> typefaceMap = new HashMap<>();
+
     /** A hidden image used for font metrics. */
     private BufferedImage fmImage;
     
@@ -990,8 +989,14 @@ public class SkijaGraphics2D extends Graphics2D {
             return;
         }
         this.awtFont = font;
-        this.typeface = Typeface.makeFromName(font.getFontName(), awtFontStyleToSkijaFontStyle(font.getStyle()));
-        this.skijaFont = new org.jetbrains.skija.Font(typeface, font.getSize());
+        FontStyle style = awtFontStyleToSkijaFontStyle(font.getStyle());
+        TypefaceKey key = new TypefaceKey(font.getName(), style);
+        this.typeface = this.typefaceMap.get(key);
+        if (this.typeface == null) {
+            this.typeface = Typeface.makeFromName(font.getName(), awtFontStyleToSkijaFontStyle(font.getStyle()));
+            this.typefaceMap.put(key, this.typeface);
+        }
+        this.skijaFont = new org.jetbrains.skija.Font(this.typeface, font.getSize());
     }
 
     /**
