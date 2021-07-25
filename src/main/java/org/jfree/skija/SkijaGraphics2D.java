@@ -210,20 +210,25 @@ public class SkijaGraphics2D extends Graphics2D {
             int segType = iterator.currentSegment(coords);
             switch (segType) {
                 case PathIterator.SEG_MOVETO:
+                    LOGGER.debug("SEG_MOVETO: " + coords[0] + ", " + coords[1]);
                     p.moveTo((float) coords[0], (float) coords[1]);
                     break;
                 case PathIterator.SEG_LINETO:
+                    LOGGER.debug("SEG_LINETO: " + coords[0] + ", " + coords[1]);
                     p.lineTo((float) coords[0], (float) coords[1]);
                     break;
                 case PathIterator.SEG_QUADTO:
-                    p.quadTo((float) coords[0], (float) coords[1], (float) coords[2], 
+                    LOGGER.debug("SEG_QUADTO: " + coords[0] + ", " + coords[1] + ", " + coords[2] + ", " + coords[3]);
+                    p.quadTo((float) coords[0], (float) coords[1], (float) coords[2],
                             (float) coords[3]);
                     break;
                 case PathIterator.SEG_CUBICTO:
-                    p.cubicTo((float) coords[0], (float) coords[1], (float) coords[2], 
+                    LOGGER.debug("SEG_CUBICTO: " + coords[0] + ", " + coords[1] + ", " + coords[2] + ", " + coords[3] + ", " + coords[4] + ", " + coords[5]);
+                    p.cubicTo((float) coords[0], (float) coords[1], (float) coords[2],
                             (float) coords[3], (float) coords[4], (float) coords[5]);
                     break;
                 case PathIterator.SEG_CLOSE:
+                    LOGGER.debug("SEG_CLOSE: ");
                     p.closePath();
                     break;
                 default:
@@ -1085,7 +1090,9 @@ public class SkijaGraphics2D extends Graphics2D {
     public void setClip(Shape shape) {
         // null is handled fine here...
         this.clip = this.transform.createTransformedShape(shape);
-        //this.canvas.clipRegion(new Region().)
+        if (shape != null) {
+            this.canvas.clipPath(path(shape));
+        }
     }
     
     /**
