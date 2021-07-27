@@ -1,7 +1,7 @@
 SkijaGraphics2D
 ===============
 
-Version 1.0.0, 21 July 2021
+Version 1.0.1, 27 July 2021
 
 Overview
 --------
@@ -18,7 +18,7 @@ To include `SkijaGraphics2D` in your own project, add the following Maven depend
         <dependency>
             <groupId>org.jfree</groupId>
             <artifactId>org.jfree.skijagraphics2d</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
 
 Build
@@ -65,5 +65,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 History
 -------
+
+##### 27-Jul-2021 : Version 1.0.1
+- added specialisation in `fill(Shape)` for `Rectangle2D` instances
+- added caching of `Typeface` instances
+- fix paint setting for font rendering
+- added support for `AlphaComposite`
+- apply clipping (still work-in-progress)
+- fix for cyclic gradient paint
+- updated `Skija` to version 0.92.18
+- added logging via `SLF4J` and `Log4J2`
+
 ##### 21-Jul-2021 : Version 1.0.0
 - initial public release.
