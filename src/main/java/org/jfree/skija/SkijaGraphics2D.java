@@ -497,7 +497,7 @@ public class SkijaGraphics2D extends Graphics2D {
 
     @Override
     public void setPaint(Paint paint) {
-        LOGGER.debug("setPaint(Paint) : " + paint);
+        LOGGER.debug("setPaint({})," + paint);
         if (paint == null) {
             return;
         }
@@ -1088,6 +1088,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setClip(Shape shape) {
+        LOGGER.debug("setClip({})",  shape);
         // null is handled fine here...
         this.clip = this.transform.createTransformedShape(shape);
         if (shape != null) {
@@ -1106,6 +1107,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void clipRect(int x, int y, int width, int height) {
+        LOGGER.debug("clipRect({}, {}, {}, {})", x, y , width, height);
         clip(rect(x, y, width, height));
     }
 
@@ -1121,6 +1123,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setClip(int x, int y, int width, int height) {
+        LOGGER.debug("setClip({}, {}, {}, {})", x, y, width, height);
         setClip(rect(x, y, width, height));
     }
 
@@ -1139,6 +1142,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void clip(Shape s) {
+        LOGGER.debug("clip({})", s);
         if (s instanceof Line2D) {
             s = s.getBounds2D();
         }
