@@ -436,6 +436,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fill(Shape s) {
+        LOGGER.debug("fill({})", s);
         this.skijaPaint.setMode(PaintMode.FILL);
         if (s instanceof Rectangle2D) {
             Rectangle2D r = (Rectangle2D) s;
@@ -489,15 +490,55 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setComposite(Composite comp) {
+        LOGGER.debug("setComposite({})", comp);
         if (comp == null) {
             throw new IllegalArgumentException("Null 'comp' argument.");
         }
         this.composite = comp;
+        if (comp instanceof AlphaComposite) {
+            AlphaComposite ac = (AlphaComposite) comp;
+            this.skijaPaint.setAlphaf(ac.getAlpha());
+            switch (ac.getRule()) {
+                case AlphaComposite.CLEAR:
+                    this.skijaPaint.setBlendMode(BlendMode.CLEAR);
+                    break;
+                case AlphaComposite.SRC:
+                    this.skijaPaint.setBlendMode(BlendMode.SRC);
+                    break;
+                case AlphaComposite.SRC_OVER:
+                    this.skijaPaint.setBlendMode(BlendMode.SRC_OVER);
+                    break;
+                case AlphaComposite.DST_OVER:
+                    this.skijaPaint.setBlendMode(BlendMode.DST_OVER);
+                    break;
+                case AlphaComposite.SRC_IN:
+                    this.skijaPaint.setBlendMode(BlendMode.SRC_IN);
+                    break;
+                case AlphaComposite.DST_IN:
+                    this.skijaPaint.setBlendMode(BlendMode.DST_IN);
+                    break;
+                case AlphaComposite.SRC_OUT:
+                    this.skijaPaint.setBlendMode(BlendMode.SRC_OUT);
+                    break;
+                case AlphaComposite.DST_OUT:
+                    this.skijaPaint.setBlendMode(BlendMode.DST_OUT);
+                    break;
+                case AlphaComposite.DST:
+                    this.skijaPaint.setBlendMode(BlendMode.DST);
+                    break;
+                case AlphaComposite.SRC_ATOP:
+                    this.skijaPaint.setBlendMode(BlendMode.SRC_ATOP);
+                    break;
+                case AlphaComposite.DST_ATOP:
+                    this.skijaPaint.setBlendMode(BlendMode.DST_ATOP);
+                    break;
+            }
+        }
     }
 
     @Override
     public void setPaint(Paint paint) {
-        LOGGER.debug("setPaint({})," + paint);
+        LOGGER.debug("setPaint({})", paint);
         if (paint == null) {
             return;
         }
