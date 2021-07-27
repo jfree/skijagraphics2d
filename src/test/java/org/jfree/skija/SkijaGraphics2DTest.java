@@ -296,7 +296,11 @@ public class SkijaGraphics2DTest {
         assertEquals(new Rectangle2D.Double(1.0, 1.0, 1.0, 1.0), 
                 this.g2.getClip().getBounds2D());
     }
-    
+
+    /**
+     * Check that if the user clip is non-intersecting with the existing clip, then
+     * the clip is empty.
+     */
     @Test
     public void checkNonIntersectingClip() {
         Rectangle2D r = new Rectangle2D.Double(1.0, 1.0, 3.0, 3.0);
