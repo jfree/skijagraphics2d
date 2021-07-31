@@ -203,6 +203,13 @@ public class SkijaGraphics2D extends Graphics2D {
 
     private final double[] coords = new double[6];
 
+    /**
+     * Creates a Skija path from the outline of a Java2D shape.
+     *
+     * @param shape  the shape ({@code null} not permitted).
+     *
+     * @return A path.
+     */
     private Path path(Shape shape) {
         Path p = new Path();
         PathIterator iterator = shape.getPathIterator(null);
@@ -441,6 +448,15 @@ public class SkijaGraphics2D extends Graphics2D {
         if (s instanceof Rectangle2D) {
             Rectangle2D r = (Rectangle2D) s;
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
+        } else if (s instanceof Path2D) {
+            Path2D p = (Path2D) s;
+            Path path = path(s);
+            if (p.getWindingRule() == Path2D.WIND_EVEN_ODD) {
+                path.setFillMode(PathFillMode.EVEN_ODD);
+            } else {
+                path.setFillMode(PathFillMode.WINDING);
+            }
+            this.canvas.drawPath(path, this.skijaPaint);
         } else {
             this.canvas.drawPath(path(s), this.skijaPaint);
         }
@@ -586,7 +602,7 @@ public class SkijaGraphics2D extends Graphics2D {
             if (gp.isCyclic()) {
                 gs = GradientStyle.DEFAULT.withTileMode(FilterTileMode.MIRROR);
             }
-            Shader shader = Shader.makeLinearGradient(x1, y1, x2, y2, colors, (float[])null, gs);
+            Shader shader = Shader.makeLinearGradient(x1, y1, x2, y2, colors, (float[]) null, gs);
             this.skijaPaint.setShader(shader);
         }
     }

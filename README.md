@@ -66,6 +66,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 History
 -------
 
+##### not-yet-released : Version 1.0.2
+- set `PathFillMode` when filling paths
+
 ##### 27-Jul-2021 : Version 1.0.1
 - added specialisation in `fill(Shape)` for `Rectangle2D` instances
 - added caching of `Typeface` instances
