@@ -63,6 +63,9 @@ public class SkijaGraphics2D extends Graphics2D {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SkijaGraphics2D.class);
 
+    /** The line width to use when a BasicStroke with line width = 0.0 is applied. */
+    private static final double MIN_LINE_WIDTH = 0.1;
+
     /** Rendering hints (ignored in the current implementation). */
     private final RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_DEFAULT);
@@ -640,7 +643,7 @@ public class SkijaGraphics2D extends Graphics2D {
                 return; // no change
             }
             double lineWidth = bs.getLineWidth();
-            this.skijaPaint.setStrokeWidth((float) lineWidth);
+            this.skijaPaint.setStrokeWidth((float) Math.max(lineWidth, MIN_LINE_WIDTH));
             this.skijaPaint.setStrokeCap(awtToSkijaLineCap(bs.getEndCap()));
             this.skijaPaint.setStrokeJoin(awtToSkijaLineJoin(bs.getLineJoin()));
             this.skijaPaint.setStrokeMiter(bs.getMiterLimit());
