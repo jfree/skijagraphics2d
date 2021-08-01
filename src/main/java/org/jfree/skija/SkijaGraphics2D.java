@@ -56,11 +56,16 @@ import java.text.AttributedCharacterIterator;
 import java.util.*;
 
 /**
- * An implementation of the Graphics2D API that targets the Skija graphics API.
+ * An implementation of the Graphics2D API that targets the Skija graphics API
+ * (https://github.com/JetBrains/skija).
  */
 public class SkijaGraphics2D extends Graphics2D {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SkijaGraphics2D.class);
+
+    /** Rendering hints (ignored in the current implementation). */
+    private final RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
+            RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
     /** Surface from Skija */
     private Surface surface;
@@ -68,11 +73,11 @@ public class SkijaGraphics2D extends Graphics2D {
     /** Canvas from Skija */
     private Canvas canvas;
     
-    /** Rendering hints. */
-    private final RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
-            RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-
+    /** Paint used for drawing on Skija canvas. */
     private org.jetbrains.skija.Paint skijaPaint;
+
+    /** The Skija save/restore count, used to restore the original clip in setClip(). */
+    private int restoreCount;
     
     private Paint awtPaint;
     
@@ -164,6 +169,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param height  the height.
      */
     public SkijaGraphics2D(int width, int height) {
+        LOGGER.debug("SkijaGraphics2D({}, {})", width, height);
         this.surface = Surface.makeRasterN32Premul(width, height);
         init(surface.getCanvas());
     }
@@ -190,6 +196,9 @@ public class SkijaGraphics2D extends Graphics2D {
         this.skijaPaint = new org.jetbrains.skija.Paint().setColor(0xFF000000);
         this.typeface = Typeface.makeFromName(this.awtFont.getFontName(), FontStyle.NORMAL);
         this.skijaFont = new org.jetbrains.skija.Font(typeface, 12);
+
+        // save the original clip settings so they can be restored later in setClip()
+        this.restoreCount = this.canvas.save();
     }
 
     /**
@@ -201,6 +210,7 @@ public class SkijaGraphics2D extends Graphics2D {
         return this.surface;
     }
 
+    /** Used and reused in the path() method below. */
     private final double[] coords = new double[6];
 
     /**
@@ -1124,6 +1134,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Shape getClip() {
+        LOGGER.debug("getClip() called.");
         if (this.clip == null) {
             return null;
         }
@@ -1148,6 +1159,14 @@ public class SkijaGraphics2D extends Graphics2D {
         LOGGER.debug("setClip({})",  shape);
         // null is handled fine here...
         this.clip = this.transform.createTransformedShape(shape);
+
+        // a new clip is being set, so first restore the original clip (and save
+        // it again for future restores)
+        this.canvas.restoreToCount(this.restoreCount);
+        this.restoreCount = this.canvas.save();
+        // restoring the clip might also reset the transform, so reapply it
+        setTransform(getTransform());
+        // now apply on the Skija canvas
         if (shape != null) {
             this.canvas.clipPath(path(shape));
         }

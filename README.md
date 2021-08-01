@@ -67,6 +67,7 @@ History
 -------
 
 ##### not-yet-released : Version 1.0.2
+- fix `setClip()` to restore original clip before applying new user clip
 - set `PathFillMode` when filling paths
 
 ##### 27-Jul-2021 : Version 1.0.1
