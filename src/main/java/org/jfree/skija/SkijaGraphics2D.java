@@ -259,10 +259,9 @@ public class SkijaGraphics2D extends Graphics2D {
 
     /**
      * Draws the specified shape with the current {@code paint} and
-     * {@code stroke}.  There is direct handling for {@code Line2D},
-     * {@code Rectangle2D}, {@code Ellipse2D} and {@code Path2D}.  All other
-     * shapes are mapped to a {@code GeneralPath} and then drawn (effectively
-     * as {@code Path2D} objects).
+     * {@code stroke}.  There is direct handling for {@code Line2D} and
+     * {@code Rectangle2D}.  All other shapes are mapped to a {@code GeneralPath}
+     * and then drawn (effectively as {@code Path2D} objects).
      *
      * @param s  the shape ({@code null} not permitted).
      *
@@ -277,6 +276,9 @@ public class SkijaGraphics2D extends Graphics2D {
             this.canvas.drawLine((float) l.getX1(), (float) l.getY1(), (float) l.getX2(), (float) l.getY2(), this.skijaPaint);
         } else if (s instanceof Rectangle2D) {
             Rectangle2D r = (Rectangle2D) s;
+            if (r.getWidth() < 0.0 || r.getHeight() < 0.0) {
+                return;
+            }
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
         } else {
             this.canvas.drawPath(path(s), this.skijaPaint);
@@ -443,8 +445,7 @@ public class SkijaGraphics2D extends Graphics2D {
 
     /**
      * Fills the specified shape with the current {@code paint}.  There is
-     * direct handling for {@code RoundRectangle2D}, 
-     * {@code Rectangle2D}, {@code Ellipse2D} and {@code Arc2D}.  
+     * direct handling for {@code Rectangle2D}.
      * All other shapes are mapped to a path outline and then filled.
      * 
      * @param s  the shape ({@code null} not permitted). 
@@ -457,6 +458,9 @@ public class SkijaGraphics2D extends Graphics2D {
         this.skijaPaint.setMode(PaintMode.FILL);
         if (s instanceof Rectangle2D) {
             Rectangle2D r = (Rectangle2D) s;
+            if (r.getWidth() < 0.0 || r.getHeight() < 0.0) {
+                return;
+            }
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
         } else if (s instanceof Path2D) {
             Path2D p = (Path2D) s;

@@ -818,5 +818,31 @@ public class SkijaGraphics2DTest {
         g2.drawRenderedImage(null, AffineTransform.getTranslateInstance(0, 0));
         assertTrue(true); // won't get here if there's an exception above                
     }
+
+    /**
+     * Filling and/or stroking a Rectangle2D with a negative width will not display anything but
+     * should not throw an exception.
+     */
+    @Test
+    public void fillOrStrokeRectangleWithNegativeWidthMustNotFail() {
+        g2.draw(new Rectangle2D.Double(0, 0, 0, 10));
+        g2.draw(new Rectangle2D.Double(0, 0, -10, 10));
+        g2.fill(new Rectangle2D.Double(0, 0, 0, 10));
+        g2.fill(new Rectangle2D.Double(0, 0, -10, 10));
+        assertTrue(true); // won't get here if there's an exception above
+    }
+
+    /**
+     * Filling and/or stroking a Rectangle2D with a negative height will not display anything but
+     * should not throw an exception.
+     */
+    @Test
+    public void fillOrStrokeRectangleWithNegativeHeightMustNotFail() {
+        g2.draw(new Rectangle2D.Double(0, 0, 0, 10));
+        g2.draw(new Rectangle2D.Double(0, 0, -10, 10));
+        g2.fill(new Rectangle2D.Double(0, 0, 0, 10));
+        g2.fill(new Rectangle2D.Double(0, 0, -10, 10));
+        assertTrue(true); // won't get here if there's an exception above
+    }
 }
 
