@@ -323,6 +323,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
+        LOGGER.debug("drawImage(BufferedImage, BufferedImageOp, {}, {})", x, y);
         BufferedImage imageToDraw = img;
         if (op != null) {
             imageToDraw = op.filter(img, null);
@@ -339,6 +340,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawRenderedImage(RenderedImage img, AffineTransform xform) {
+        LOGGER.debug("drawRenderedImage(RenderedImage, AffineTransform)");
         if (img == null) { // to match the behaviour specified in the JDK
             return;
         }
@@ -355,6 +357,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void drawRenderableImage(RenderableImage img, 
             AffineTransform xform) {
+        LOGGER.debug("drawRenderableImage(RenderableImage, AffineTransform xform)");
         RenderedImage ri = img.createDefaultRendering();
         drawRenderedImage(ri, xform);
     }
@@ -1600,6 +1603,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
+        LOGGER.debug("drawImage(Image, {}, {}, ImageObserver)", x, y);
         if (img == null) {
             return true;
         }
@@ -1630,6 +1634,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
+        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, ImageObserver", x, y, width, height);
         final BufferedImage buffered;
         if (img instanceof BufferedImage) {
             buffered = (BufferedImage) img;
@@ -1660,6 +1665,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, int x, int y, Color bgcolor, 
             ImageObserver observer) {
+        LOGGER.debug("drawImage(Image, {}, {}, Color, ImageObserver)", x, y);
         if (img == null) {
             return true;
         }
@@ -1676,6 +1682,7 @@ public class SkijaGraphics2D extends Graphics2D {
 
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
+        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, Color, ImageObserver)", x, y, width, height);
         Paint saved = getPaint();
         setPaint(bgcolor);
         fillRect(x, y, width, height);
@@ -1703,6 +1710,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
+        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, {}, {}, {}, {}, ImageObserver)", dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2);
         int w = dx2 - dx1;
         int h = dy2 - dy1;
         BufferedImage img2 = new BufferedImage(w, h,
@@ -1735,6 +1743,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgcolor, ImageObserver observer) {
+        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, {}, {}, {}, {}, Color, ImageObserver)", dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2);
         Paint saved = getPaint();
         setPaint(bgcolor);
         fillRect(dx1, dy1, dx2 - dx1, dy2 - dy1);
