@@ -301,6 +301,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image img, AffineTransform xform, 
             ImageObserver obs) {
+        LOGGER.debug("drawImage(Image, AffineTransform, ImageObserver)");
         AffineTransform savedTransform = getTransform();
         if (xform != null) {
             transform(xform);
@@ -374,6 +375,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawString(String str, int x, int y) {
+        LOGGER.debug("drawString({}, {}, {}", str, x, y);
         drawString(str, (float) x, (float) y);
     }
 
@@ -390,6 +392,7 @@ public class SkijaGraphics2D extends Graphics2D {
         if (str == null) {
             throw new NullPointerException("Null 'str' argument.");
         }
+        LOGGER.debug("drawString({}, {}, {})", str, x, y);
         this.skijaPaint.setMode(PaintMode.FILL);
         this.canvas.drawString(str, x, y, this.skijaFont, this.skijaPaint);
     }
@@ -405,6 +408,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawString(AttributedCharacterIterator iterator, int x, int y) {
+        LOGGER.debug("drawString(AttributedCharacterIterator, {}, {}", x, y);
         drawString(iterator, (float) x, (float) y);
     }
 
@@ -419,6 +423,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void drawString(AttributedCharacterIterator iterator, float x, 
             float y) {
+        LOGGER.debug("drawString(AttributedCharacterIterator, {}, {}", x, y);
         Set<AttributedCharacterIterator.Attribute>
                 s = iterator.getAllAttributeKeys();
         if (!s.isEmpty()) {
@@ -446,6 +451,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawGlyphVector(GlyphVector g, float x, float y) {
+        LOGGER.debug("drawGlyphVector(GlyphVector, {}, {})", x, y);
         fill(g.getOutline(x, y));
     }
 
@@ -495,6 +501,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
+        LOGGER.debug("hit(Rectangle, Shape, boolean)");
         Shape ts;
         if (onStroke) {
             ts = this.transform.createTransformedShape(
@@ -637,6 +644,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void setStroke(Stroke s) {
         nullNotPermitted(s, "s");
+        LOGGER.debug("setStroke({})", stroke);
         if (s == this.stroke) { // quick test, full equals test later
             return;
         }
@@ -730,6 +738,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Object getRenderingHint(RenderingHints.Key hintKey) {
+        LOGGER.debug("getRenderingHint({})", hintKey);
         return this.hints.get(hintKey);
     }
 
@@ -744,6 +753,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
+        LOGGER.debug("setRenderingHint({}, {})", hintKey, hintValue);
         this.hints.put(hintKey, hintValue);
     }
 
@@ -756,6 +766,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setRenderingHints(Map<?, ?> hints) {
+        LOGGER.debug("setRenderingHints(Map<?, ?>)");
         this.hints.clear();
         this.hints.putAll(hints);
     }
@@ -767,6 +778,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void addRenderingHints(Map<?, ?> hints) {
+        LOGGER.debug("addRenderingHints(Map<?, ?>)");
         this.hints.putAll(hints);
     }
 
@@ -781,6 +793,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public RenderingHints getRenderingHints() {
+        LOGGER.debug("getRenderingHints()");
         return (RenderingHints) this.hints.clone();
     }
 
@@ -795,6 +808,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void translate(int tx, int ty) {
+        LOGGER.debug("translate({}, {})", tx, ty);
         translate((double) tx, (double) ty);
     }
 
@@ -806,6 +820,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void translate(double tx, double ty) {
+        LOGGER.debug("translate({}, {})", tx, ty);
         this.transform.translate(tx, ty);
         this.canvas.translate((float) tx, (float) ty);
     }
@@ -817,6 +832,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void rotate(double theta) {
+        LOGGER.debug("rotate({})", theta);
         this.transform.rotate(theta);
         this.canvas.rotate((float) Math.toDegrees(theta));
     }
@@ -830,6 +846,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void rotate(double theta, double x, double y) {
+        LOGGER.debug("rotate({}, {}, {})", theta, x, y);
         translate(x, y);
         rotate(theta);
         translate(-x, -y);
@@ -843,6 +860,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void scale(double sx, double sy) {
+        LOGGER.debug("scale({}, {})", sx, sy);
         this.transform.scale(sx, sy);
         this.canvas.scale((float) sx, (float) sy);
     }
@@ -860,6 +878,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void shear(double shx, double shy) {
+        LOGGER.debug("shear({}, {})", shx, shy);
         this.transform.shear(shx, shy);
         this.canvas.skew((float) shx, (float) shy);
     }
@@ -871,6 +890,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void transform(AffineTransform t) {
+        LOGGER.debug("transform(AffineTransform) : {}", t );
         AffineTransform tx = getTransform();
         tx.concatenate(t);
         setTransform(tx);
@@ -885,6 +905,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public AffineTransform getTransform() {
+        LOGGER.debug("getTransform()");
         return (AffineTransform) this.transform.clone();
     }
 
@@ -898,6 +919,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setTransform(AffineTransform t) {
+        LOGGER.debug("setTransform(AffineTransform) : {}", t);
         if (t == null) {
             this.transform = new AffineTransform();
             t = this.transform;
@@ -985,6 +1007,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Graphics create() {
+        LOGGER.debug("create()");
         SkijaGraphics2D copy = new SkijaGraphics2D(this.canvas);
         copy.setRenderingHints(getRenderingHints());
         copy.setClip(getClip());
