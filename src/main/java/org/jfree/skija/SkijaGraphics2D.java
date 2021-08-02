@@ -919,7 +919,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setTransform(AffineTransform t) {
-        LOGGER.debug("setTransform(AffineTransform) : {}", t);
+        LOGGER.debug("setTransform({})", t);
         if (t == null) {
             this.transform = new AffineTransform();
             t = this.transform;
@@ -1282,6 +1282,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void copyArea(int x, int y, int width, int height, int dx, int dy) {
+        LOGGER.debug("copyArea({}, {}, {}, {}, {}, {}) - NOT IMPLEMENTED", x, y, width, height, dx, dy);
         // FIXME: implement this, low priority
     }
 
@@ -1296,6 +1297,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawLine(int x1, int y1, int x2, int y2) {
+        LOGGER.debug("drawLine()");
         if (this.line == null) {
             this.line = new Line2D.Double(x1, y1, x2, y2);
         } else {
@@ -1314,6 +1316,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fillRect(int x, int y, int width, int height) {
+        LOGGER.debug("fillRect({}, {}, {}, {})", x, y, width, height);
         fill(rect(x, y, width, height));
     }
 
@@ -1331,6 +1334,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void clearRect(int x, int y, int width, int height) {
+        LOGGER.debug("clearRect({}, {}, {}, {})", x, y, width, height);
         if (getBackground() == null) {
             return;  // we can't do anything
         }
@@ -1377,6 +1381,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void drawRoundRect(int x, int y, int width, int height, 
             int arcWidth, int arcHeight) {
+        LOGGER.debug("drawRoundRect({}, {}, {}, {}, {}, {})", x, y, width, height, arcWidth, arcHeight);
         draw(roundRect(x, y, width, height, arcWidth, arcHeight));
     }
 
@@ -1395,6 +1400,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void fillRoundRect(int x, int y, int width, int height, 
             int arcWidth, int arcHeight) {
+        LOGGER.debug("fillRoundRect({}, {}, {}, {}, {}, {})", x, y, width, height, arcWidth, arcHeight);
         fill(roundRect(x, y, width, height, arcWidth, arcHeight));
     }
     
@@ -1437,6 +1443,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawOval(int x, int y, int width, int height) {
+        LOGGER.debug("drawOval({}, {}, {}, {})", x, y, width, height);
         draw(oval(x, y, width, height));
     }
 
@@ -1452,6 +1459,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fillOval(int x, int y, int width, int height) {
+        LOGGER.debug("fillOval({}, {}, {}, {})", x, y, width, height);
         fill(oval(x, y, width, height));
     }
 
@@ -1495,6 +1503,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void drawArc(int x, int y, int width, int height, int startAngle, 
             int arcAngle) {
+        LOGGER.debug("drawArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
         draw(arc(x, y, width, height, startAngle, arcAngle));
     }
 
@@ -1516,6 +1525,7 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void fillArc(int x, int y, int width, int height, int startAngle, 
             int arcAngle) {
+        LOGGER.debug("fillArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
         fill(arc(x, y, width, height, startAngle, arcAngle));
     }
 
@@ -1555,6 +1565,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
+        LOGGER.debug("drawPolyline(int[], int[], int)");
         GeneralPath p = createPolygon(xPoints, yPoints, nPoints, false);
         draw(p);
     }
@@ -1570,6 +1581,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @see #fillPolygon(int[], int[], int)      */
     @Override
     public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+        LOGGER.debug("drawPolygon(int[], int[], int)");
         GeneralPath p = createPolygon(xPoints, yPoints, nPoints, true);
         draw(p);
     }
@@ -1585,6 +1597,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+        LOGGER.debug("fillPolygon(int[], int[], int)");
         GeneralPath p = createPolygon(xPoints, yPoints, nPoints, true);
         fill(p);
     }
@@ -1602,6 +1615,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     public GeneralPath createPolygon(int[] xPoints, int[] yPoints, 
             int nPoints, boolean close) {
+        LOGGER.debug("createPolygon(int[], int[], int, boolean)");
         GeneralPath p = new GeneralPath();
         p.moveTo(xPoints[0], yPoints[0]);
         for (int i = 1; i < nPoints; i++) {
@@ -1657,7 +1671,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
-        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, ImageObserver", x, y, width, height);
+        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, ImageObserver)", x, y, width, height);
         final BufferedImage buffered;
         if (img instanceof BufferedImage) {
             buffered = (BufferedImage) img;
@@ -1779,7 +1793,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void dispose() {
-        // nothing to do
+        LOGGER.debug("dispose() - DOES NOTHING");
     }
  
     /**
