@@ -73,6 +73,9 @@ public class SkijaGraphics2D extends Graphics2D {
     /** Surface from Skija */
     private Surface surface;
 
+    private int width;
+    private int height;
+
     /** Canvas from Skija */
     private Canvas canvas;
     
@@ -152,6 +155,12 @@ public class SkijaGraphics2D extends Graphics2D {
     private Arc2D arc;
 
     /**
+     * The device configuration (this is lazily instantiated in the
+     * getDeviceConfiguration() method).
+     */
+    private GraphicsConfiguration deviceConfiguration;
+
+    /**
      * Throws an {@code IllegalArgumentException} if {@code arg} is
      * {@code null}.
      * 
@@ -173,6 +182,8 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     public SkijaGraphics2D(int width, int height) {
         LOGGER.debug("SkijaGraphics2D({}, {})", width, height);
+        this.width = width;
+        this.height = height;
         this.surface = Surface.makeRasterN32Premul(width, height);
         init(surface.getCanvas());
     }
@@ -184,7 +195,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param canvas  the canvas ({@code null} not permitted).
      */
     public SkijaGraphics2D(Canvas canvas) {
-        LOGGER.debug("SkijaGraphics2D(Canvas) constructor.");
+        LOGGER.debug("SkijaGraphics2D(Canvas).");
         init(canvas);
     }
 
@@ -202,6 +213,7 @@ public class SkijaGraphics2D extends Graphics2D {
 
         // save the original clip settings so they can be restored later in setClip()
         this.restoreCount = this.canvas.save();
+        LOGGER.debug("restoreCount updated to {}", this.restoreCount);
     }
 
     /**
@@ -518,10 +530,21 @@ public class SkijaGraphics2D extends Graphics2D {
         return !a1.isEmpty();
     }
 
+    /**
+     * Returns the device configuration associated with this
+     * {@code Graphics2D}.
+     *
+     * @return The device configuration (never {@code null}).
+     */
     @Override
     public GraphicsConfiguration getDeviceConfiguration() {
-        // TODO
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.deviceConfiguration == null) {
+            int width = this.width;
+            int height = this.height;
+            this.deviceConfiguration = new SkijaGraphicsConfiguration(width,
+                    height);
+        }
+        return this.deviceConfiguration;
     }
 
     /**
@@ -1021,16 +1044,22 @@ public class SkijaGraphics2D extends Graphics2D {
         return copy;
     }
 
+    @Override
+    public Graphics create(int x, int y, int width, int height) {
+        LOGGER.debug("create({}, {}, {}, {})", x, y, width, height);
+        return super.create(x, y, width, height);
+    }
+
     /**
      * Returns the foreground color.  This method exists for backwards
      * compatibility in AWT, you should use the {@link #getPaint()} method.
      * This attribute is updated by the {@link #setColor(java.awt.Color)}
      * method, and also by the {@link #setPaint(java.awt.Paint)} method if
      * a {@code Color} instance is passed to the method.
-     * 
+     *
      * @return The foreground color (never {@code null}).
-     * 
-     * @see #getPaint() 
+     *
+     * @see #getPaint()
      */
     @Override
     public Color getColor() {
@@ -1167,7 +1196,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Shape getClip() {
-        LOGGER.debug("getClip() called.");
+        LOGGER.debug("getClip()");
         if (this.clip == null) {
             return null;
         }
@@ -1267,6 +1296,7 @@ public class SkijaGraphics2D extends Graphics2D {
           Area a2 = new Area(this.clip);
           a1.intersect(a2);
           this.clip = new Path2D.Double(a1);
+          this.canvas.clipPath(path(ts));
         }
     }
 
@@ -1793,7 +1823,8 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void dispose() {
-        LOGGER.debug("dispose() - DOES NOTHING");
+        LOGGER.debug("dispose()");
+        this.canvas.restoreToCount(this.restoreCount);
     }
  
     /**

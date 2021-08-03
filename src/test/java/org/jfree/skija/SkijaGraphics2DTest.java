@@ -844,5 +844,20 @@ public class SkijaGraphics2DTest {
         g2.fill(new Rectangle2D.Double(0, 0, -10, 10));
         assertTrue(true); // won't get here if there's an exception above
     }
+
+    /**
+     *
+     */
+    @Test
+    public void checkClipAfterCreate() {
+        this.g2.setClip(10, 20, 30, 40);
+        assertEquals(new Rectangle(10, 20, 30, 40), g2.getClip().getBounds2D());
+
+        Graphics2D g2copy = (Graphics2D) this.g2.create();
+        g2copy.clipRect(11, 21, 10, 10);
+        assertEquals(new Rectangle(11, 21, 10, 10), g2copy.getClip().getBounds2D());
+        g2copy.dispose();
+        assertEquals(new Rectangle(10, 20, 30, 40), g2.getClip().getBounds2D());
+    }
 }
 
