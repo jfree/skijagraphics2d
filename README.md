@@ -5,11 +5,26 @@ Version 1.0.1, 27 July 2021
 
 Overview
 --------
-**SkijaGraphics2D** is a free implementation of Java2D's `Graphics2D` API that targets Skia via the [Skija](https://github.com/JetBrains/skija) bindings.
+**SkijaGraphics2D** is an implementation of Java2D's `Graphics2D` API that targets Skia via the [Skija](https://github.com/JetBrains/skija) bindings.  The project is exploratory at the moment, but potential uses for this are to:
 
-The following sample is created using [Orson Charts](https://github.com/jfree/orson-charts):
+- provide a path for Java applications to access the Skia rendering pipeline (potential speed and quality gains plus access to target formats such as SVG and PDF)
+- include libraries such as [JFreeChart](https://github.com/jfree/jfreechart) and [Orson Charts](https://github.com/jfree/orsoncharts) in [Jetpack Compose Desktop](https://www.jetbrains.com/lp/compose/) applications 
+  
+Note that these are **potential** uses, so far I haven't tried those things out...if you have then let us know what worked and what didn't work.
 
-![SkijaGraphics2D sample](sample.png)
+Testing
+-------
+SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfree/graphics2d-tester) and produces the output shown below.  There are several areas that still need work:
+
+- fonts
+  - mapping of Java logical fonts to physical fonts
+  - metrics
+- the `create()` method is not yet managing the user clip correctly, causing problems in the Swing UI / SteelSeries test
+- mapping of `RadialGradientPaint` focus point
+
+Aside from those points, the results are already very promising.
+
+![SkijaGraphics2D test output](skija.png)
 
 Include
 -------

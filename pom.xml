@@ -154,6 +154,11 @@
             <version>0.92.18</version>
         </dependency>
         <dependency>
+            <groupId>eu.hansolo</groupId>
+            <artifactId>SteelSeries</artifactId>
+            <version>3.9.30</version>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.32</version>
