@@ -785,6 +785,48 @@ public class SkijaGraphics2DTest {
         assertTrue(g2.drawImage(img, 1, 2, 10, -10, null)); 
     }
 
+    @Test
+    public void checkColorAfterSetClip() {
+        this.g2.setColor(Color.RED);
+        assertEquals(Color.RED, this.g2.getColor());
+        this.g2.setClip(0, 0, 10, 10);
+        assertEquals(Color.RED, this.g2.getColor());
+        this.g2.setColor(Color.BLUE);
+        assertEquals(Color.BLUE, this.g2.getColor());
+        this.g2.setClip(0, 0, 20, 20);
+        assertEquals(Color.BLUE, this.g2.getColor());
+    }
+
+    /**
+     * See https://github.com/jfree/fxgraphics2d/issues/6
+     */
+    @Test
+    public void checkFontAfterSetClip() {
+        this.g2.setFont(new Font(Font.DIALOG, Font.BOLD, 12));
+        assertEquals(new Font(Font.DIALOG, Font.BOLD, 12), this.g2.getFont());
+        this.g2.setClip(0, 0, 10, 10);
+        assertEquals(new Font(Font.DIALOG, Font.BOLD, 12), this.g2.getFont());
+        this.g2.setFont(new Font(Font.DIALOG, Font.BOLD, 24));
+        assertEquals(new Font(Font.DIALOG, Font.BOLD, 24), this.g2.getFont());
+        this.g2.setClip(0, 0, 20, 20);
+        assertEquals(new Font(Font.DIALOG, Font.BOLD, 24), this.g2.getFont());
+    }
+
+    /**
+     * See https://github.com/jfree/fxgraphics2d/issues/6
+     */
+    @Test
+    public void checkStrokeAfterSetClip() {
+        this.g2.setStroke(new BasicStroke(1.0f));
+        assertEquals(new BasicStroke(1.0f), this.g2.getStroke());
+        this.g2.setClip(0, 0, 10, 10);
+        assertEquals(new BasicStroke(1.0f), this.g2.getStroke());
+        this.g2.setStroke(new BasicStroke(2.0f));
+        assertEquals(new BasicStroke(2.0f), this.g2.getStroke());
+        this.g2.setClip(0, 0, 20, 20);
+        assertEquals(new BasicStroke(2.0f), this.g2.getStroke());
+    }
+
     /** 
      * A test to check whether setting a transform on the Graphics2D affects
      * the results of text measurements performed via getFontMetrics().
