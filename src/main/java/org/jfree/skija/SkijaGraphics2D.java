@@ -640,7 +640,14 @@ public class SkijaGraphics2D extends Graphics2D {
                 colors[i] = rgp.getColors()[i].getRGB();
             }
             GradientStyle gs = GradientStyle.DEFAULT.withTileMode(awtCycleMethodToSkijaFilterTileMode(rgp.getCycleMethod()));
-            Shader shader = Shader.makeRadialGradient(x, y, rgp.getRadius(), colors, rgp.getFractions(), gs);
+            float fx = (float) rgp.getFocusPoint().getX();
+            float fy = (float) rgp.getFocusPoint().getY();
+            Shader shader;
+            if (rgp.getFocusPoint().equals(rgp.getCenterPoint())) {
+                shader = Shader.makeRadialGradient(x, y, rgp.getRadius(), colors, rgp.getFractions(), gs);
+            } else {
+                shader = Shader.makeTwoPointConicalGradient(fx, fy, 0, x, y, rgp.getRadius(), colors, rgp.getFractions(), gs);
+            }
             this.skijaPaint.setShader(shader);
         } else if (paint instanceof GradientPaint) {
             GradientPaint gp = (GradientPaint) paint;

@@ -14,13 +14,11 @@ Note that these are **potential** uses, so far I haven't tried those things out.
 
 Testing
 -------
-SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfree/graphics2d-tester) and produces the output shown below.  There are several areas that still need work:
+SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfree/graphics2d-tester) and produces the output shown below.  There are a couple of areas that still need work:
 
 - fonts
   - mapping of Java logical fonts to physical fonts
-  - metrics
 - the `create()` method is not yet managing the user clip correctly, causing problems in the Swing UI / SteelSeries test
-- mapping of `RadialGradientPaint` focus point
 
 Aside from those points, the results are already very promising.
 
@@ -83,6 +81,7 @@ History
 
 ##### not yet released : Version 1.0.3
 - handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
+- map focus point correctly for `RadialGradientPaint`
 - get font metrics from Skija (not Java2D)
 
 ##### 4-Aug-2021 : Version 1.0.2
