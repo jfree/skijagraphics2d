@@ -96,6 +96,8 @@ public class SkijaGraphics2D extends Graphics2D {
 
     private Typeface typeface;
 
+    private final Map<TypefaceKey, Typeface> typefaceMap = new HashMap<>();
+
     private org.jetbrains.skija.Font skijaFont;
 
     /** The background color, used in the {@code clearRect()} method. */
@@ -108,8 +110,6 @@ public class SkijaGraphics2D extends Graphics2D {
 
     /** The user clip (can be null). */
     private Shape clip;
-
-    private final Map<TypefaceKey, Typeface> typefaceMap = new HashMap<>();
 
     /** A hidden image used for font metrics. */
     private BufferedImage fmImage;
@@ -134,7 +134,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * An instance that is lazily instantiated in fillRect and then 
      * subsequently reused to avoid creating a lot of garbage.
      */
-    Rectangle2D rect;
+    private Rectangle2D rect;
 
     /**
      * An instance that is lazily instantiated in draw/fillRoundRect and then
@@ -195,7 +195,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param canvas  the canvas ({@code null} not permitted).
      */
     public SkijaGraphics2D(Canvas canvas) {
-        LOGGER.debug("SkijaGraphics2D(Canvas).");
+        LOGGER.debug("SkijaGraphics2D(Canvas)");
         init(canvas);
     }
 
@@ -295,6 +295,45 @@ public class SkijaGraphics2D extends Graphics2D {
                 return;
             }
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
+        } else if (s instanceof Ellipse2D) {
+            Ellipse2D e = (Ellipse2D) s;
+            this.canvas.drawOval(Rect.makeXYWH((float) e.getMinX(), (float) e.getMinY(), (float) e.getWidth(), (float) e.getHeight()), this.skijaPaint);
+        } else {
+            this.canvas.drawPath(path(s), this.skijaPaint);
+        }
+    }
+
+    /**
+     * Fills the specified shape with the current {@code paint}.  There is
+     * direct handling for {@code Rectangle2D}.
+     * All other shapes are mapped to a path outline and then filled.
+     *
+     * @param s  the shape ({@code null} not permitted).
+     *
+     * @see #draw(java.awt.Shape)
+     */
+    @Override
+    public void fill(Shape s) {
+        LOGGER.debug("fill({})", s);
+        this.skijaPaint.setMode(PaintMode.FILL);
+        if (s instanceof Rectangle2D) {
+            Rectangle2D r = (Rectangle2D) s;
+            if (r.getWidth() < 0.0 || r.getHeight() < 0.0) {
+                return;
+            }
+            this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
+        } else if (s instanceof Ellipse2D) {
+            Ellipse2D e = (Ellipse2D) s;
+            this.canvas.drawOval(Rect.makeXYWH((float) e.getMinX(), (float) e.getMinY(), (float) e.getWidth(), (float) e.getHeight()), this.skijaPaint);
+        } else if (s instanceof Path2D) {
+            Path2D p = (Path2D) s;
+            Path path = path(s);
+            if (p.getWindingRule() == Path2D.WIND_EVEN_ODD) {
+                path.setFillMode(PathFillMode.EVEN_ODD);
+            } else {
+                path.setFillMode(PathFillMode.WINDING);
+            }
+            this.canvas.drawPath(path, this.skijaPaint);
         } else {
             this.canvas.drawPath(path(s), this.skijaPaint);
         }
@@ -465,39 +504,6 @@ public class SkijaGraphics2D extends Graphics2D {
     public void drawGlyphVector(GlyphVector g, float x, float y) {
         LOGGER.debug("drawGlyphVector(GlyphVector, {}, {})", x, y);
         fill(g.getOutline(x, y));
-    }
-
-    /**
-     * Fills the specified shape with the current {@code paint}.  There is
-     * direct handling for {@code Rectangle2D}.
-     * All other shapes are mapped to a path outline and then filled.
-     * 
-     * @param s  the shape ({@code null} not permitted). 
-     * 
-     * @see #draw(java.awt.Shape) 
-     */
-    @Override
-    public void fill(Shape s) {
-        LOGGER.debug("fill({})", s);
-        this.skijaPaint.setMode(PaintMode.FILL);
-        if (s instanceof Rectangle2D) {
-            Rectangle2D r = (Rectangle2D) s;
-            if (r.getWidth() < 0.0 || r.getHeight() < 0.0) {
-                return;
-            }
-            this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
-        } else if (s instanceof Path2D) {
-            Path2D p = (Path2D) s;
-            Path path = path(s);
-            if (p.getWindingRule() == Path2D.WIND_EVEN_ODD) {
-                path.setFillMode(PathFillMode.EVEN_ODD);
-            } else {
-                path.setFillMode(PathFillMode.WINDING);
-            }
-            this.canvas.drawPath(path, this.skijaPaint);
-        } else {
-            this.canvas.drawPath(path(s), this.skijaPaint);
-        }
     }
 
     /**

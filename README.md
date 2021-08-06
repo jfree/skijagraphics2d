@@ -81,6 +81,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 History
 -------
 
+##### not yet released : Version 1.0.3
+- handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
+
 ##### 4-Aug-2021 : Version 1.0.2
 - fix `setClip()` to restore original clip before applying new user clip
 - set `PathFillMode` when filling paths
