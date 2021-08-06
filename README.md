@@ -83,6 +83,7 @@ History
 
 ##### not yet released : Version 1.0.3
 - handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
+- get font metrics from Skija (not Java2D)
 
 ##### 4-Aug-2021 : Version 1.0.2
 - fix `setClip()` to restore original clip before applying new user clip

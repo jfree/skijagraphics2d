@@ -111,11 +111,6 @@ public class SkijaGraphics2D extends Graphics2D {
     /** The user clip (can be null). */
     private Shape clip;
 
-    /** A hidden image used for font metrics. */
-    private BufferedImage fmImage;
-    
-    private Graphics2D fmImageG2D;
-
     /** 
      * The font render context.  The fractional metrics flag solves the glyph
      * positioning issue identified by Christoph Nahr:
@@ -1166,15 +1161,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public FontMetrics getFontMetrics(Font f) {
-        if (this.fmImage == null) {
-            this.fmImage = new BufferedImage(10, 10, 
-                    BufferedImage.TYPE_INT_RGB);
-            this.fmImageG2D = this.fmImage.createGraphics();
-            this.fmImageG2D.setRenderingHint(
-                    RenderingHints.KEY_FRACTIONALMETRICS, 
-                    RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        }
-        return this.fmImageG2D.getFontMetrics(f);
+        return new SkijaFontMetrics(this.skijaFont, this.awtFont);
     }
     
     /**
@@ -1950,7 +1937,7 @@ public class SkijaGraphics2D extends Graphics2D {
             bytes[i * 4] = (byte) (p & 0xFF);
         }
         ImageInfo imageInfo = new ImageInfo(w, h, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
-        return org.jetbrains.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4);
+        return org.jetbrains.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4L);
     }
 
 }
