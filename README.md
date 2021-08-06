@@ -18,7 +18,7 @@ SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfr
 
 - fonts
   - mapping of Java logical fonts to physical fonts
-- the `create()` method is not yet managing the user clip correctly, causing problems in the Swing UI / SteelSeries test
+- the `create()` method is not yet managing the user clip correctly, causing problems in the Swing UI / SteelSeries test and also omitting the legend in the 3D chart sample.
 
 Aside from those points, the results are already very promising.
 
@@ -39,6 +39,33 @@ Build
 You can build `SkijaGraphics2D` from sources using Maven:
 
     mvn clean install
+
+History
+-------
+
+##### not yet released : Version 1.0.3
+- handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
+- map focus point correctly for `RadialGradientPaint`
+- get font metrics from Skija (not Java2D)
+
+##### 4-Aug-2021 : Version 1.0.2
+- fix `setClip()` to restore original clip before applying new user clip
+- set `PathFillMode` when filling paths
+- add `MIN_LINE_WIDTH` to apply for `BasicStroke(0f)`
+- fix exception when `Rectangle2D` has negative `width` or `height`
+
+##### 27-Jul-2021 : Version 1.0.1
+- added specialisation in `fill(Shape)` for `Rectangle2D` instances
+- added caching of `Typeface` instances
+- fix paint setting for font rendering
+- added support for `AlphaComposite`
+- apply clipping (still work-in-progress)
+- fix for cyclic gradient paint
+- updated `Skija` to version 0.92.18
+- added logging via `SLF4J` and `Log4J2`
+
+##### 21-Jul-2021 : Version 1.0.0
+- initial public release.
 
 License
 -------
@@ -75,30 +102,3 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
-
-History
--------
-
-##### not yet released : Version 1.0.3
-- handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
-- map focus point correctly for `RadialGradientPaint`
-- get font metrics from Skija (not Java2D)
-
-##### 4-Aug-2021 : Version 1.0.2
-- fix `setClip()` to restore original clip before applying new user clip
-- set `PathFillMode` when filling paths
-- add `MIN_LINE_WIDTH` to apply for `BasicStroke(0f)`
-- fix exception when `Rectangle2D` has negative `width` or `height`
-
-##### 27-Jul-2021 : Version 1.0.1
-- added specialisation in `fill(Shape)` for `Rectangle2D` instances
-- added caching of `Typeface` instances
-- fix paint setting for font rendering
-- added support for `AlphaComposite`
-- apply clipping (still work-in-progress)
-- fix for cyclic gradient paint
-- updated `Skija` to version 0.92.18
-- added logging via `SLF4J` and `Log4J2`
-
-##### 21-Jul-2021 : Version 1.0.0
-- initial public release.
