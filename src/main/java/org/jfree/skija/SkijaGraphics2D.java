@@ -1041,7 +1041,7 @@ public class SkijaGraphics2D extends Graphics2D {
         LOGGER.debug("create()");
         SkijaGraphics2D copy = new SkijaGraphics2D(this.canvas);
         copy.setRenderingHints(getRenderingHints());
-        copy.setClip(getClip());
+        copy.clip = this.clip;
         copy.setPaint(getPaint());
         copy.setColor(getColor());
         copy.setComposite(getComposite());
@@ -1199,9 +1199,8 @@ public class SkijaGraphics2D extends Graphics2D {
         if (this.clip == null) {
             return null;
         }
-        AffineTransform inv;
         try {
-            inv = this.transform.createInverse();
+            AffineTransform inv = this.transform.createInverse();
             return inv.createTransformedShape(this.clip);
         } catch (NoninvertibleTransformException ex) {
             return null;
@@ -1219,14 +1218,13 @@ public class SkijaGraphics2D extends Graphics2D {
     public void setClip(Shape shape) {
         LOGGER.debug("setClip({})",  shape);
         // null is handled fine here...
-        this.clip = this.transform.createTransformedShape(shape);
-
         // a new clip is being set, so first restore the original clip (and save
         // it again for future restores)
         this.canvas.restoreToCount(this.restoreCount);
         this.restoreCount = this.canvas.save();
         // restoring the clip might also reset the transform, so reapply it
         setTransform(getTransform());
+        this.clip = this.transform.createTransformedShape(shape);
         // now apply on the Skija canvas
         if (shape != null) {
             this.canvas.clipPath(path(shape));
@@ -1287,15 +1285,14 @@ public class SkijaGraphics2D extends Graphics2D {
             setClip(s);
             return;
         }
-        Shape ts = this.transform.createTransformedShape(s);
-        if (!ts.intersects(this.clip.getBounds2D())) {
+        if (!s.intersects(getClip().getBounds2D())) {
             setClip(new Rectangle2D.Double());
         } else {
-          Area a1 = new Area(ts);
-          Area a2 = new Area(this.clip);
+          Area a1 = new Area(s);
+          Area a2 = new Area(getClip());
           a1.intersect(a2);
-          this.clip = new Path2D.Double(a1);
-          this.canvas.clipPath(path(ts));
+          setClip(new Path2D.Double(a1));
+          this.canvas.clipPath(path(s));
         }
     }
 

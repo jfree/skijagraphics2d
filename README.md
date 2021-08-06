@@ -14,13 +14,7 @@ Note that these are **potential** uses, so far I haven't tried those things out.
 
 Testing
 -------
-SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfree/graphics2d-tester) and produces the output shown below.  There are a couple of areas that still need work:
-
-- fonts
-  - mapping of Java logical fonts to physical fonts
-- the `create()` method is not yet managing the user clip correctly, causing problems in the Swing UI / SteelSeries test.
-
-Aside from those points, the results are already very promising.
+SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfree/graphics2d-tester) and produces the output shown below.
 
 ![SkijaGraphics2D test output](skija.png)
 
@@ -48,6 +42,7 @@ History
 - map focus point correctly for `RadialGradientPaint`
 - get font metrics from Skija (not Java2D)
 - fix bug in `setColor(Color)` method where Skija paint not set
+- fix clipping issue
 
 ##### 4-Aug-2021 : Version 1.0.2
 - fix `setClip()` to restore original clip before applying new user clip
