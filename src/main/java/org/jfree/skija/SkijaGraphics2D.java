@@ -1090,7 +1090,6 @@ public class SkijaGraphics2D extends Graphics2D {
             return;
         }
         this.color = c;
-        this.awtPaint = c;
         setPaint(c);
     }
 

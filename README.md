@@ -18,7 +18,7 @@ SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfr
 
 - fonts
   - mapping of Java logical fonts to physical fonts
-- the `create()` method is not yet managing the user clip correctly, causing problems in the Swing UI / SteelSeries test and also omitting the legend in the 3D chart sample.
+- the `create()` method is not yet managing the user clip correctly, causing problems in the Swing UI / SteelSeries test.
 
 Aside from those points, the results are already very promising.
 
@@ -47,6 +47,7 @@ History
 - handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
 - map focus point correctly for `RadialGradientPaint`
 - get font metrics from Skija (not Java2D)
+- fix bug in `setColor(Color)` method where Skija paint not set
 
 ##### 4-Aug-2021 : Version 1.0.2
 - fix `setClip()` to restore original clip before applying new user clip
