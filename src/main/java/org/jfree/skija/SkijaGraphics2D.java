@@ -54,6 +54,7 @@ import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * An implementation of the Graphics2D API that targets the Skija graphics API
@@ -66,7 +67,7 @@ public class SkijaGraphics2D extends Graphics2D {
     /** The line width to use when a BasicStroke with line width = 0.0 is applied. */
     private static final double MIN_LINE_WIDTH = 0.1;
 
-    /** Rendering hints (ignored in the current implementation). */
+    /** Rendering hints. */
     private final RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
@@ -170,6 +171,36 @@ public class SkijaGraphics2D extends Graphics2D {
     }
 
     /**
+     * Creates a map containing default mappings from the Java logical font names
+     * to suitable physical font names.  This is not a particularly great solution,
+     * but so far I don't see a better alternative.
+     *
+     * @return A map.
+     */
+    public static Map<String, String> createDefaultFontMap() {
+        Map<String, String> result = new HashMap<>();
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.indexOf("win") >= 0) { // Windows
+            result.put(Font.MONOSPACED, "Courier New");
+            result.put(Font.SANS_SERIF, "Arial");
+            result.put(Font.SERIF, "Times New Roman");
+        } else if (os.indexOf("mac") >= 0) { // MacOS
+            result.put(Font.MONOSPACED, "Courier New");
+            result.put(Font.SANS_SERIF, "Helvetica");
+            result.put(Font.SERIF, "Times New Roman");
+        } else { // assume Linux
+            result.put(Font.MONOSPACED, "Courier New");
+            result.put(Font.SANS_SERIF, "Arial");
+            result.put(Font.SERIF, "Times New Roman");
+        }
+        result.put(Font.DIALOG, result.get(Font.SANS_SERIF));
+        result.put(Font.DIALOG_INPUT, result.get(Font.SANS_SERIF));
+        return result;
+    }
+
+    private Map<String, String> fontMapping;
+
+    /**
      * Creates a new instance with the specified height and width.
      *
      * @param width  the width.
@@ -180,6 +211,13 @@ public class SkijaGraphics2D extends Graphics2D {
         this.width = width;
         this.height = height;
         this.surface = Surface.makeRasterN32Premul(width, height);
+        this.fontMapping = createDefaultFontMap();
+        setRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION, new Function<String, String>() {
+            @Override
+            public String apply(String s) {
+                return SkijaGraphics2D.this.fontMapping.get(s);
+            }
+        });
         init(surface.getCanvas());
     }
 
@@ -1144,15 +1182,26 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setFont(Font font) {
+        LOGGER.debug("setFont({})", font);
         if (font == null) {
             return;
         }
         this.awtFont = font;
+        String fontName = font.getName();
+        // check if there is a font name mapping to apply
+        Function fontMapping = (Function) getRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION);
+        if (fontMapping != null) {
+            String mappedFontName = (String) fontMapping.apply(fontName);
+            if (mappedFontName != null) {
+                LOGGER.debug("Mapped font name is {}", mappedFontName);
+                fontName = mappedFontName;
+            }
+        }
         FontStyle style = awtFontStyleToSkijaFontStyle(font.getStyle());
-        TypefaceKey key = new TypefaceKey(font.getName(), style);
+        TypefaceKey key = new TypefaceKey(fontName, style);
         this.typeface = this.typefaceMap.get(key);
         if (this.typeface == null) {
-            this.typeface = Typeface.makeFromName(font.getName(), awtFontStyleToSkijaFontStyle(font.getStyle()));
+            this.typeface = Typeface.makeFromName(fontName, awtFontStyleToSkijaFontStyle(font.getStyle()));
             this.typefaceMap.put(key, this.typeface);
         }
         this.skijaFont = new org.jetbrains.skija.Font(this.typeface, font.getSize());

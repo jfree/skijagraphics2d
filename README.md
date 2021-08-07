@@ -1,20 +1,20 @@
 SkijaGraphics2D
 ===============
 
-Version 1.0.2, 4 August 2021
+Version 1.0.3, 7 August 2021
 
 Overview
 --------
-**SkijaGraphics2D** is an implementation of Java2D's `Graphics2D` API that targets Skia via the [Skija](https://github.com/JetBrains/skija) bindings.  The project is exploratory at the moment, but potential uses for this are to:
+**SkijaGraphics2D** is an implementation of Java2D's `Graphics2D` API that targets Skia via the [Skija](https://github.com/JetBrains/skija) bindings.  The project is exploratory at the moment, but potential uses for this are:
 
-- provide a path for Java applications to access the Skia rendering pipeline (potential speed and quality gains plus access to target formats such as SVG and PDF)
-- include libraries such as [JFreeChart](https://github.com/jfree/jfreechart) and [Orson Charts](https://github.com/jfree/orsoncharts) in [Jetpack Compose Desktop](https://www.jetbrains.com/lp/compose/) applications 
+- to provide a path for Java applications to access the Skia rendering engine, perhaps providing speed and/or quality gains compared to Java2D as well as access to target formats supported by Skia (for example, SVG and PDF)
+- to include libraries such as [JFreeChart](https://github.com/jfree/jfreechart) and [Orson Charts](https://github.com/jfree/orsoncharts) in [Jetpack Compose Desktop](https://www.jetbrains.com/lp/compose/) applications 
   
-Note that these are **potential** uses, so far I haven't tried those things out...if you have then let us know what worked and what didn't work.
+Note that these are **potential** uses, so far I haven't tried those things out...if you have then let me know what worked and what didn't work.
 
 Testing
 -------
-SkijaGraphics2D is being tested using [Graphics2D Tester](https://github.com/jfree/graphics2d-tester) and produces the output shown below.
+**SkijaGraphics2D** is being tested using [Graphics2D Tester](https://github.com/jfree/graphics2d-tester) and produces the output shown below and now matches Java2D quite closely:
 
 ![SkijaGraphics2D test output](skija.png)
 
@@ -25,7 +25,7 @@ To include `SkijaGraphics2D` in your own project, add the following Maven depend
         <dependency>
             <groupId>org.jfree</groupId>
             <artifactId>org.jfree.skijagraphics2d</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
         </dependency>
 
 Build
@@ -37,20 +37,21 @@ You can build `SkijaGraphics2D` from sources using Maven:
 History
 -------
 
-##### not yet released : Version 1.0.3
+##### Version 1.0.3 : 7-Aug-2021
 - handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
 - map focus point correctly for `RadialGradientPaint`
+- add default font mappings for Java logical fonts
 - get font metrics from Skija (not Java2D)
 - fix bug in `setColor(Color)` method where Skija paint not set
-- fix clipping issue
+- fix clipping issues 
 
-##### 4-Aug-2021 : Version 1.0.2
+##### Version 1.0.2 : 4-Aug-2021
 - fix `setClip()` to restore original clip before applying new user clip
 - set `PathFillMode` when filling paths
 - add `MIN_LINE_WIDTH` to apply for `BasicStroke(0f)`
 - fix exception when `Rectangle2D` has negative `width` or `height`
 
-##### 27-Jul-2021 : Version 1.0.1
+##### Version 1.0.1 : 27-Jul-2021
 - added specialisation in `fill(Shape)` for `Rectangle2D` instances
 - added caching of `Typeface` instances
 - fix paint setting for font rendering
@@ -60,7 +61,7 @@ History
 - updated `Skija` to version 0.92.18
 - added logging via `SLF4J` and `Log4J2`
 
-##### 21-Jul-2021 : Version 1.0.0
+##### Version 1.0.0 : 21-Jul-2021
 - initial public release.
 
 License
