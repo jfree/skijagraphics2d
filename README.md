@@ -8,7 +8,7 @@ Overview
 **SkijaGraphics2D** is an implementation of Java2D's `Graphics2D` API that targets Skia via the [Skija](https://github.com/JetBrains/skija) bindings.  The project is exploratory at the moment, but potential uses for this are:
 
 - to provide a path for Java applications to access the Skia rendering engine, perhaps providing speed and/or quality gains compared to Java2D as well as access to target formats supported by Skia (for example, SVG and PDF)
-- to include libraries such as [JFreeChart](https://github.com/jfree/jfreechart) and [Orson Charts](https://github.com/jfree/orsoncharts) in [Jetpack Compose Desktop](https://www.jetbrains.com/lp/compose/) applications 
+- to include libraries such as [JFreeChart](https://github.com/jfree/jfreechart) and [Orson Charts](https://github.com/jfree/orson-charts) in [Jetpack Compose Desktop](https://www.jetbrains.com/lp/compose/) applications 
   
 Note that these are **potential** uses, so far I haven't tried those things out...if you have then let me know what worked and what didn't work.
 
