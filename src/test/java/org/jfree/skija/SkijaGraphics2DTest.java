@@ -54,18 +54,27 @@ import static org.junit.jupiter.api.Assertions.*;
  * implementation).
  */
 public class SkijaGraphics2DTest {
-    
+
+    /**
+     * Change this to true to test against a reference Graphics2D
+     * implementation from the JDK.  This is useful to verify that the tests
+     * are correct.
+     */
+    private static final boolean TEST_REFERENCE_IMPLEMENTATION = false;
+
     private Graphics2D g2;
     
     @BeforeEach
     public void setUp() {
-        // to test a reference implementation, use this Graphics2D from a
-        // BufferedImage in the JDK
-        //BufferedImage img = new BufferedImage(10, 20, BufferedImage.TYPE_INT_ARGB);
-        //this.g2 = img.createGraphics();
-        
-        // Test SVGGraphics2D...
-        this.g2 = new SkijaGraphics2D(10, 20);
+        if (TEST_REFERENCE_IMPLEMENTATION) {
+            // to test a reference implementation, use this Graphics2D from a
+            // BufferedImage in the JDK
+            BufferedImage img = new BufferedImage(10, 20, BufferedImage.TYPE_INT_ARGB);
+            this.g2 = img.createGraphics();
+        } else {
+            // Test SkijaGraphics2D...
+            this.g2 = new SkijaGraphics2D(10, 20);
+        }
     }
     
     /**
@@ -105,7 +114,7 @@ public class SkijaGraphics2DTest {
         // in spite of the docs saying that null is accepted this gives
         // a NullPointerException with SunGraphics2D.
         //g2.setTransform(null);
-        //Assert.assertEquals(new AffineTransform(), g2.getTransform());
+        //assertEquals(new AffineTransform(), g2.getTransform());
     }
     
     /**
@@ -256,7 +265,7 @@ public class SkijaGraphics2DTest {
     }
     
     /**
-     * The default user clip should be <code>null</code>.
+     * The default user clip should be {@code null}.
      */
     @Test
     public void checkDefaultClip() {
@@ -387,6 +396,27 @@ public class SkijaGraphics2DTest {
     }
     
     /**
+     * Clipping with a null argument is "not recommended" according to the
+     * latest API docs (https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6206189).
+     */
+    @Test
+    public void checkClipWithNullArgument() {
+
+        // when there is a current clip set, a null pointer exception is expected
+        this.g2.setClip(new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));
+        Exception exception = assertThrows(NullPointerException.class, () -> {
+            this.g2.clip(null);
+        });
+
+        this.g2.setClip(null);
+        try {
+            this.g2.clip(null);
+        } catch (Exception e) {
+            fail("No exception expected.");
+        }
+    }
+
+    /**
      * A simple check for a call to clipRect().
      */
     @Test
@@ -414,27 +444,6 @@ public class SkijaGraphics2DTest {
         assertTrue(this.g2.getClip().getBounds2D().isEmpty());    
     }
 
-    /**
-     * Clipping with a null argument is "not recommended" according to the
-     * latest API docs (https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6206189).
-     */
-    @Test
-    public void checkClipWithNullArgument() {
-
-        // when there is a current clip set, a null pointer exception is expected
-        this.g2.setClip(new Rectangle2D.Double(1.0, 2.0, 3.0, 4.0));
-        Exception exception = assertThrows(NullPointerException.class, () -> {
-            this.g2.clip(null);
-        });
-
-        this.g2.setClip(null);
-        try {
-            this.g2.clip(null);
-        } catch (Exception e) {
-            fail("No exception expected.");
-        }
-    }
-
     @Test
     public void checkDrawStringWithNullString() {
         try {
@@ -454,10 +463,7 @@ public class SkijaGraphics2DTest {
     @Test
     public void checkDrawStringWithEmptyString() {
         // this should not cause any exception 
-//        g2.setRenderingHint(SVGHints.KEY_DRAW_STRING_TYPE, SVGHints.VALUE_DRAW_STRING_TYPE_VECTOR);
         g2.drawString("", 1, 2);
-//        g2.setRenderingHint(SVGHints.KEY_DRAW_STRING_TYPE, null);
-//        g2.drawString("", 1, 2);
     }
 
     /**
@@ -523,6 +529,26 @@ public class SkijaGraphics2DTest {
         assertEquals(existingBackground, this.g2.getBackground());
     }
     
+    /**
+     * If setPaint() is called with an argument that is not an instance of
+     * Color, then the existing color remains unchanged.
+     */
+    @Test
+    public void checkSetPaintDoesNotUpdateColor() {
+        GradientPaint gp = new GradientPaint(1.0f, 2.0f, Color.RED,
+                3.0f, 4.0f, Color.BLUE);
+        this.g2.setColor(Color.MAGENTA);
+        this.g2.setPaint(gp);
+        assertEquals(gp, this.g2.getPaint());
+        assertEquals(Color.MAGENTA, this.g2.getColor());
+    }
+
+    /**
+     * Verifies that setting the old AWT color attribute also updates the
+     * Java2D paint attribute.
+     *
+     * @see #checkSetPaintAlsoUpdatesColorButNotBackground()
+     */
     @Test
     public void checkSetColorAlsoUpdatesPaint() {
         this.g2.setColor(Color.MAGENTA);
@@ -716,7 +742,7 @@ public class SkijaGraphics2DTest {
     }
     
     /**
-     * Check that a null GlyphVector throws a <code>NullPointerException</code>.
+     * Check that a null GlyphVector throws a {@code NullPointerException}.
      */
     @Test
     public void drawGlyphVectorNull() {
@@ -785,6 +811,11 @@ public class SkijaGraphics2DTest {
         assertTrue(g2.drawImage(img, 1, 2, 10, -10, null)); 
     }
 
+    /**
+     * Check that the color is not changed by setting a clip.  In some
+     * implementations the clip is saved/restored as part of the overall
+     * graphics state so clipping can impact other attributes.
+     */
     @Test
     public void checkColorAfterSetClip() {
         this.g2.setColor(Color.RED);
@@ -827,7 +858,7 @@ public class SkijaGraphics2DTest {
         assertEquals(new BasicStroke(2.0f), this.g2.getStroke());
     }
 
-    /** 
+    /**
      * A test to check whether setting a transform on the Graphics2D affects
      * the results of text measurements performed via getFontMetrics().
      */
@@ -887,9 +918,6 @@ public class SkijaGraphics2DTest {
         assertTrue(true); // won't get here if there's an exception above
     }
 
-    /**
-     *
-     */
     @Test
     public void checkClipAfterCreate() {
         this.g2.setClip(10, 20, 30, 40);
