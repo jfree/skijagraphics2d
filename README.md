@@ -70,7 +70,7 @@ License
 `SkijaGraphics2D` is licensed under a BSD-style license:
 
 ```
-Copyright (c) 2021, Object Refinery Limited.
+Copyright (c) 2021, by David Gilbert.
 
 All rights reserved.
 
