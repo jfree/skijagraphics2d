@@ -48,6 +48,7 @@ public class SkijaFontMetrics extends java.awt.FontMetrics {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SkijaFontMetrics.class);
 
+    /** Skija font. */
     private org.jetbrains.skija.Font skijaFont;
 
     /** Skija font metrics. */
