@@ -149,9 +149,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jetbrains.skija</groupId>
+            <groupId>io.github.humbleui</groupId>
             <artifactId>skija-${skija.platform}</artifactId>
-            <version>0.92.30</version>
+            <version>0.98.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

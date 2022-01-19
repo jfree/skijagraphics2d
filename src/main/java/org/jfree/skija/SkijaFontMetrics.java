@@ -35,7 +35,7 @@
 
 package org.jfree.skija;
 
-import org.jetbrains.skija.FontMetrics;
+import io.github.humbleui.skija.FontMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class SkijaFontMetrics extends java.awt.FontMetrics {
     private static final Logger LOGGER = LoggerFactory.getLogger(SkijaFontMetrics.class);
 
     /** Skija font. */
-    private org.jetbrains.skija.Font skijaFont;
+    private io.github.humbleui.skija.Font skijaFont;
 
     /** Skija font metrics. */
     private FontMetrics metrics;
@@ -60,7 +60,7 @@ public class SkijaFontMetrics extends java.awt.FontMetrics {
      * @param skijaFont  the Skija font ({@code null} not permitted).
      * @param awtFont  the AWT font ({@code null} not permitted).
      */
-    public SkijaFontMetrics(org.jetbrains.skija.Font skijaFont, Font awtFont) {
+    public SkijaFontMetrics(io.github.humbleui.skija.Font skijaFont, Font awtFont) {
         super(awtFont);
         this.metrics = skijaFont.getMetrics();
         this.skijaFont = skijaFont;

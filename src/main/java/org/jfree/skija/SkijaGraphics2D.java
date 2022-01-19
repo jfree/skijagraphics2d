@@ -35,8 +35,9 @@
 
 package org.jfree.skija;
 
-import org.jetbrains.skija.Canvas;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.Canvas;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.types.Rect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +82,7 @@ public class SkijaGraphics2D extends Graphics2D {
     private Canvas canvas;
     
     /** Paint used for drawing on Skija canvas. */
-    private org.jetbrains.skija.Paint skijaPaint;
+    private io.github.humbleui.skija.Paint skijaPaint;
 
     /** The Skija save/restore count, used to restore the original clip in setClip(). */
     private int restoreCount;
@@ -99,7 +100,7 @@ public class SkijaGraphics2D extends Graphics2D {
 
     private final Map<TypefaceKey, Typeface> typefaceMap = new HashMap<>();
 
-    private org.jetbrains.skija.Font skijaFont;
+    private io.github.humbleui.skija.Font skijaFont;
 
     /** The background color, used in the {@code clearRect()} method. */
     private Color background = Color.BLACK;
@@ -180,11 +181,11 @@ public class SkijaGraphics2D extends Graphics2D {
     public static Map<String, String> createDefaultFontMap() {
         Map<String, String> result = new HashMap<>();
         String os = System.getProperty("os.name").toLowerCase();
-        if (os.indexOf("win") >= 0) { // Windows
+        if (os.contains("win")) { // Windows
             result.put(Font.MONOSPACED, "Courier New");
             result.put(Font.SANS_SERIF, "Arial");
             result.put(Font.SERIF, "Times New Roman");
-        } else if (os.indexOf("mac") >= 0) { // MacOS
+        } else if (os.contains("mac")) { // MacOS
             result.put(Font.MONOSPACED, "Courier New");
             result.put(Font.SANS_SERIF, "Helvetica");
             result.put(Font.SERIF, "Times New Roman");
@@ -212,12 +213,7 @@ public class SkijaGraphics2D extends Graphics2D {
         this.height = height;
         this.surface = Surface.makeRasterN32Premul(width, height);
         this.fontMapping = createDefaultFontMap();
-        setRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION, new Function<String, String>() {
-            @Override
-            public String apply(String s) {
-                return SkijaGraphics2D.this.fontMapping.get(s);
-            }
-        });
+        setRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION, (Function<String, String>) s -> SkijaGraphics2D.this.fontMapping.get(s));
         init(surface.getCanvas());
     }
 
@@ -240,9 +236,9 @@ public class SkijaGraphics2D extends Graphics2D {
     private void init(Canvas canvas) {
         nullNotPermitted(canvas, "canvas");
         this.canvas = canvas;
-        this.skijaPaint = new org.jetbrains.skija.Paint().setColor(0xFF000000);
+        this.skijaPaint = new io.github.humbleui.skija.Paint().setColor(0xFF000000);
         this.typeface = Typeface.makeFromName(this.awtFont.getFontName(), FontStyle.NORMAL);
-        this.skijaFont = new org.jetbrains.skija.Font(typeface, 12);
+        this.skijaFont = new io.github.humbleui.skija.Font(typeface, 12);
 
         // save the original clip settings so they can be restored later in setClip()
         this.restoreCount = this.canvas.save();
@@ -1204,7 +1200,7 @@ public class SkijaGraphics2D extends Graphics2D {
             this.typeface = Typeface.makeFromName(fontName, awtFontStyleToSkijaFontStyle(font.getStyle()));
             this.typefaceMap.put(key, this.typeface);
         }
-        this.skijaFont = new org.jetbrains.skija.Font(this.typeface, font.getSize());
+        this.skijaFont = new io.github.humbleui.skija.Font(this.typeface, font.getSize());
     }
 
     /**
@@ -1757,7 +1753,7 @@ public class SkijaGraphics2D extends Graphics2D {
             g2.drawImage(img, 0, 0, width, height, null);
             g2.dispose();
         }
-        org.jetbrains.skija.Image skijaImage = convertToSkijaImage(buffered);
+        io.github.humbleui.skija.Image skijaImage = convertToSkijaImage(buffered);
         this.canvas.drawImageRect(skijaImage, new Rect(x, y, x + width, y + height));
         return true;
     }
@@ -1962,8 +1958,8 @@ public class SkijaGraphics2D extends Graphics2D {
         Hashtable properties = new Hashtable();
         String[] keys = img.getPropertyNames();
         if (keys != null) {
-            for (int i = 0; i < keys.length; i++) {
-                properties.put(keys[i], img.getProperty(keys[i]));
+            for (String key : keys) {
+                properties.put(key, img.getProperty(key));
             }
         }
         BufferedImage result = new BufferedImage(cm, raster, 
@@ -1972,7 +1968,7 @@ public class SkijaGraphics2D extends Graphics2D {
         return result;
     }
 
-    private static org.jetbrains.skija.Image convertToSkijaImage(Image image) {
+    private static io.github.humbleui.skija.Image convertToSkijaImage(Image image) {
         int w = image.getWidth(null);
         int h = image.getHeight(null);
         BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
@@ -1989,7 +1985,7 @@ public class SkijaGraphics2D extends Graphics2D {
             bytes[i * 4] = (byte) (p & 0xFF);
         }
         ImageInfo imageInfo = new ImageInfo(w, h, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
-        return org.jetbrains.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4L);
+        return io.github.humbleui.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4L);
     }
 
 }

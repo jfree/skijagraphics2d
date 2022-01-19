@@ -35,7 +35,7 @@
 
 package org.jfree.skija;
 
-import org.jetbrains.skija.FontStyle;
+import io.github.humbleui.skija.FontStyle;
 
 /**
  * A key used to identify a {@code Typeface} in a map used to cache items.
