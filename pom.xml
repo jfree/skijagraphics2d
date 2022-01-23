@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jfree</groupId>
     <artifactId>org.jfree.skijagraphics2d</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.4</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -139,13 +139,6 @@
             </build>
         </profile>
     </profiles>
-
-    <repositories>
-        <repository>
-            <id>space-maven</id>
-            <url>https://packages.jetbrains.team/maven/p/skija/maven</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>

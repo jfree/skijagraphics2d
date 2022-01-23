@@ -1,14 +1,14 @@
 SkijaGraphics2D
 ===============
 
-Version 1.0.3, 7 August 2021
+Version 1.0.4, 23 January 2022
 
 Overview
 --------
 **SkijaGraphics2D** is an implementation of Java2D's `Graphics2D` API that targets Skia via the [Skija](https://github.com/HumbleUI/skija) bindings.  The project is exploratory at the moment, but potential uses for this are:
 
 - to provide a path for Java applications to access the Skia rendering engine, perhaps providing speed and/or quality gains compared to Java2D as well as access to target formats supported by Skia (for example, SVG and PDF)
-- to include libraries such as [JFreeChart](https://github.com/jfree/jfreechart) and [Orson Charts](https://github.com/jfree/orson-charts) in [Jetpack Compose Desktop](https://www.jetbrains.com/lp/compose/) applications 
+- to include libraries such as [JFreeChart](https://github.com/jfree/jfreechart) and [Orson Charts](https://github.com/jfree/orson-charts) in [Jetpack Compose Desktop](https://www.jetbrains.com/lp/compose/) applications (but see bug #7). 
   
 Note that these are **potential** uses, so far I haven't tried those things out...if you have then let me know what worked and what didn't work.
 
@@ -25,7 +25,7 @@ To include `SkijaGraphics2D` in your own project, add the following Maven depend
         <dependency>
             <groupId>org.jfree</groupId>
             <artifactId>org.jfree.skijagraphics2d</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
         </dependency>
 
 Build
@@ -36,6 +36,9 @@ You can build `SkijaGraphics2D` from sources using Maven:
 
 History
 -------
+
+##### Version 1.0.4 : 23-Jan-2022
+- switch to the Skija bindings at https://github.com/HumbleUI/Skija
 
 ##### Version 1.0.3 : 7-Aug-2021
 - handle `Ellipse2D` directly in `draw(Shape)` and `fill(Shape)`
