@@ -2,11 +2,11 @@
  * SkijaGraphics2D
  * ===============
  *
- * (C)opyright 2021, by David Gilbert.
+ * (C)opyright 2021-present, by David Gilbert.
  *
  * The SkijaGraphics2D class has been developed by David Gilbert for
- * use with Orson Charts (http://www.object-refinery.com/orsoncharts) and
- * JFreeChart (http://www.jfree.org/jfreechart).  It may be useful for other
+ * use with Orson Charts (https://github.com/jfree/orson-charts) and
+ * JFreeChart (https://www.jfree.org/jfreechart).  It may be useful for other
  * code that uses the Graphics2D API provided by Java2D.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,78 +34,26 @@
  */
 package org.jfree.skija;
 
-import io.github.humbleui.skija.BlendMode;
 import io.github.humbleui.skija.Canvas;
-import io.github.humbleui.skija.ColorAlphaType;
-import io.github.humbleui.skija.ColorType;
-import io.github.humbleui.skija.FilterTileMode;
-import io.github.humbleui.skija.FontStyle;
-import io.github.humbleui.skija.GradientStyle;
-import io.github.humbleui.skija.ImageInfo;
-import io.github.humbleui.skija.Matrix33;
-import io.github.humbleui.skija.PaintMode;
-import io.github.humbleui.skija.PaintStrokeCap;
-import io.github.humbleui.skija.PaintStrokeJoin;
-import io.github.humbleui.skija.Path;
-import io.github.humbleui.skija.PathEffect;
-import io.github.humbleui.skija.PathFillMode;
-import io.github.humbleui.skija.Shader;
-import io.github.humbleui.skija.Surface;
-import io.github.humbleui.skija.Typeface;
+import io.github.humbleui.skija.*;
 import io.github.humbleui.types.Rect;
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
-import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
 import java.awt.Image;
-import java.awt.LinearGradientPaint;
-import java.awt.MultipleGradientPaint;
-import static java.awt.MultipleGradientPaint.CycleMethod.NO_CYCLE;
-import static java.awt.MultipleGradientPaint.CycleMethod.REFLECT;
-import static java.awt.MultipleGradientPaint.CycleMethod.REPEAT;
 import java.awt.Paint;
-import java.awt.RadialGradientPaint;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.Stroke;
+import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextLayout;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Arc2D;
-import java.awt.geom.Area;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Line2D;
-import java.awt.geom.NoninvertibleTransformException;
-import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBufferInt;
-import java.awt.image.ImageObserver;
-import java.awt.image.RenderedImage;
-import java.awt.image.WritableRaster;
+import java.awt.geom.*;
+import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**

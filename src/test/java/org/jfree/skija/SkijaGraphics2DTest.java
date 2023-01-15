@@ -2,11 +2,11 @@
  * SkijaGraphics2DTest
  * ===================
  *
- * (C)opyright 2021, by David Gilbert.
+ * (C)opyright 2021-present, by David Gilbert.
  *
  * The SkijaGraphics2D class has been developed by David Gilbert for
- * use with Orson Charts (http://www.object-refinery.com/orsoncharts) and
- * JFreeChart (http://www.jfree.org/jfreechart).  It may be useful for other
+ * use with Orson Charts (https://github.com/jfree/orson-charts) and
+ * JFreeChart (https://www.jfree.org/jfreechart).  It may be useful for other
  * code that uses the Graphics2D API provided by Java2D.
  *
  * Redistribution and use in source and binary forms, with or without
