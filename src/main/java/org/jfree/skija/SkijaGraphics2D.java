@@ -32,29 +32,80 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
 package org.jfree.skija;
 
+import io.github.humbleui.skija.BlendMode;
 import io.github.humbleui.skija.Canvas;
-import io.github.humbleui.skija.*;
+import io.github.humbleui.skija.ColorAlphaType;
+import io.github.humbleui.skija.ColorType;
+import io.github.humbleui.skija.FilterTileMode;
+import io.github.humbleui.skija.FontStyle;
+import io.github.humbleui.skija.GradientStyle;
+import io.github.humbleui.skija.ImageInfo;
+import io.github.humbleui.skija.Matrix33;
+import io.github.humbleui.skija.PaintMode;
+import io.github.humbleui.skija.PaintStrokeCap;
+import io.github.humbleui.skija.PaintStrokeJoin;
+import io.github.humbleui.skija.Path;
+import io.github.humbleui.skija.PathEffect;
+import io.github.humbleui.skija.PathFillMode;
+import io.github.humbleui.skija.Shader;
+import io.github.humbleui.skija.Surface;
+import io.github.humbleui.skija.Typeface;
 import io.github.humbleui.types.Rect;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.Image;
+import java.awt.LinearGradientPaint;
+import java.awt.MultipleGradientPaint;
+import static java.awt.MultipleGradientPaint.CycleMethod.NO_CYCLE;
+import static java.awt.MultipleGradientPaint.CycleMethod.REFLECT;
+import static java.awt.MultipleGradientPaint.CycleMethod.REPEAT;
 import java.awt.Paint;
-import java.awt.*;
+import java.awt.RadialGradientPaint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextLayout;
-import java.awt.geom.*;
-import java.awt.image.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBufferInt;
+import java.awt.image.ImageObserver;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -68,6 +119,10 @@ public class SkijaGraphics2D extends Graphics2D {
     /** The line width to use when a BasicStroke with line width = 0.0 is applied. */
     private static final double MIN_LINE_WIDTH = 0.1;
 
+    /* members */
+    /** log enabled in constructor if logger is at debug level (low perf overhead) */
+    private final boolean LOG_ENABLED;
+
     /** Rendering hints. */
     private final RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_DEFAULT);
@@ -80,18 +135,18 @@ public class SkijaGraphics2D extends Graphics2D {
 
     /** Canvas from Skija */
     private Canvas canvas;
-    
+
     /** Paint used for drawing on Skija canvas. */
     private io.github.humbleui.skija.Paint skijaPaint;
 
     /** The Skija save/restore count, used to restore the original clip in setClip(). */
     private int restoreCount;
-    
+
     private Paint awtPaint;
-    
+
     /** Stores the AWT Color object for get/setColor(). */
     private Color color = Color.BLACK;
-    
+
     private Stroke stroke = new BasicStroke(1.0f);
 
     private Font awtFont = new Font("SansSerif", Font.PLAIN, 12);
@@ -104,14 +159,14 @@ public class SkijaGraphics2D extends Graphics2D {
 
     /** The background color, used in the {@code clearRect()} method. */
     private Color background = Color.BLACK;
-    
+
     private AffineTransform transform = new AffineTransform();
 
     private Composite composite = AlphaComposite.getInstance(
             AlphaComposite.SRC_OVER, 1.0f);
 
     /** The user clip (can be null). */
-    private Shape clip;
+    Shape clip;
 
     /** 
      * The font render context.  The fractional metrics flag solves the glyph
@@ -126,7 +181,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * subsequently reused to avoid creating a lot of garbage.
      */
     private Line2D line;
-    
+
     /**
      * An instance that is lazily instantiated in fillRect and then 
      * subsequently reused to avoid creating a lot of garbage.
@@ -138,13 +193,13 @@ public class SkijaGraphics2D extends Graphics2D {
      * subsequently reused to avoid creating a lot of garbage.
      */
     private RoundRectangle2D roundRect;
-    
+
     /**
      * An instance that is lazily instantiated in draw/fillOval and then
      * subsequently reused to avoid creating a lot of garbage.
      */
     private Ellipse2D oval;
-    
+
     /**
      * An instance that is lazily instantiated in draw/fillArc and then
      * subsequently reused to avoid creating a lot of garbage.
@@ -168,7 +223,7 @@ public class SkijaGraphics2D extends Graphics2D {
     private static void nullNotPermitted(Object arg, String name) {
         if (arg == null) {
             throw new IllegalArgumentException("Null '" + name + "' argument.");
-        }    
+        }
     }
 
     /**
@@ -179,7 +234,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @return A map.
      */
     public static Map<String, String> createDefaultFontMap() {
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new HashMap<>(8);
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) { // Windows
             result.put(Font.MONOSPACED, "Courier New");
@@ -208,7 +263,10 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param height  the height.
      */
     public SkijaGraphics2D(int width, int height) {
-        LOGGER.debug("SkijaGraphics2D({}, {})", width, height);
+        LOG_ENABLED = LOGGER.isDebugEnabled();
+        if (LOG_ENABLED) {
+            LOGGER.debug("SkijaGraphics2D({}, {})", width, height);
+        }
         this.width = width;
         this.height = height;
         this.surface = Surface.makeRasterN32Premul(width, height);
@@ -224,7 +282,10 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param canvas  the canvas ({@code null} not permitted).
      */
     public SkijaGraphics2D(Canvas canvas) {
-        LOGGER.debug("SkijaGraphics2D(Canvas)");
+        LOG_ENABLED = LOGGER.isDebugEnabled();
+        if (LOG_ENABLED) {
+            LOGGER.debug("SkijaGraphics2D(Canvas)");
+        }
         init(canvas);
     }
 
@@ -242,7 +303,9 @@ public class SkijaGraphics2D extends Graphics2D {
 
         // save the original clip settings so they can be restored later in setClip()
         this.restoreCount = this.canvas.save();
-        LOGGER.debug("restoreCount updated to {}", this.restoreCount);
+        if (LOG_ENABLED) {
+            LOGGER.debug("restoreCount updated to {}", this.restoreCount);
+        }
     }
 
     /**
@@ -264,39 +327,48 @@ public class SkijaGraphics2D extends Graphics2D {
      *
      * @return A path.
      */
-    private Path path(Shape shape) {
-        Path p = new Path();
-        PathIterator iterator = shape.getPathIterator(null);
-        while (!iterator.isDone()) {
-            int segType = iterator.currentSegment(coords);
+    private Path path(final Shape shape) {
+        final Path p = new Path();
+
+        for (final PathIterator iterator = shape.getPathIterator(null); !iterator.isDone(); iterator.next()) {
+            final int segType = iterator.currentSegment(coords);
             switch (segType) {
                 case PathIterator.SEG_MOVETO:
-                    LOGGER.debug("SEG_MOVETO: " + coords[0] + ", " + coords[1]);
+                    if (LOG_ENABLED) {
+                        LOGGER.debug("SEG_MOVETO: ({},{})", coords[0], coords[1]);
+                    }
                     p.moveTo((float) coords[0], (float) coords[1]);
                     break;
                 case PathIterator.SEG_LINETO:
-                    LOGGER.debug("SEG_LINETO: " + coords[0] + ", " + coords[1]);
+                    if (LOG_ENABLED) {
+                        LOGGER.debug("SEG_LINETO: ({},{})", coords[0], coords[1]);
+                    }
                     p.lineTo((float) coords[0], (float) coords[1]);
                     break;
                 case PathIterator.SEG_QUADTO:
-                    LOGGER.debug("SEG_QUADTO: " + coords[0] + ", " + coords[1] + ", " + coords[2] + ", " + coords[3]);
-                    p.quadTo((float) coords[0], (float) coords[1], (float) coords[2],
-                            (float) coords[3]);
+                    if (LOG_ENABLED) {
+                        LOGGER.debug("SEG_QUADTO: ({},{} {},{})", coords[0], coords[1], coords[2], coords[3]);
+                    }
+                    p.quadTo((float) coords[0], (float) coords[1],
+                            (float) coords[2], (float) coords[3]);
                     break;
                 case PathIterator.SEG_CUBICTO:
-                    LOGGER.debug("SEG_CUBICTO: " + coords[0] + ", " + coords[1] + ", " + coords[2] + ", " + coords[3] + ", " + coords[4] + ", " + coords[5]);
-                    p.cubicTo((float) coords[0], (float) coords[1], (float) coords[2],
-                            (float) coords[3], (float) coords[4], (float) coords[5]);
+                    if (LOG_ENABLED) {
+                        LOGGER.debug("SEG_CUBICTO: ({},{} {},{} {},{})", coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
+                    }
+                    p.cubicTo((float) coords[0], (float) coords[1],
+                            (float) coords[2], (float) coords[3],
+                            (float) coords[4], (float) coords[5]);
                     break;
                 case PathIterator.SEG_CLOSE:
-                    LOGGER.debug("SEG_CLOSE: ");
+                    if (LOG_ENABLED) {
+                        LOGGER.debug("SEG_CLOSE: ");
+                    }
                     p.closePath();
                     break;
                 default:
-                    throw new RuntimeException("Unrecognised segment type " 
-                            + segType);
+                    throw new RuntimeException("Unrecognised segment type " + segType);
             }
-            iterator.next();
         }
         return p;
     }
@@ -313,14 +385,16 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void draw(Shape s) {
-        LOGGER.debug("draw(Shape) : " + s);
+        if (LOG_ENABLED) {
+            LOGGER.debug("draw(Shape) : {}", s);
+        }
         this.skijaPaint.setMode(PaintMode.STROKE);
         if (s instanceof Line2D) {
             Line2D l = (Line2D) s;
             this.canvas.drawLine((float) l.getX1(), (float) l.getY1(), (float) l.getX2(), (float) l.getY2(), this.skijaPaint);
         } else if (s instanceof Rectangle2D) {
             Rectangle2D r = (Rectangle2D) s;
-            if (r.getWidth() < 0.0 || r.getHeight() < 0.0) {
+            if (r.getWidth() <= 0.0 || r.getHeight() <= 0.0) {
                 return;
             }
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
@@ -328,7 +402,9 @@ public class SkijaGraphics2D extends Graphics2D {
             Ellipse2D e = (Ellipse2D) s;
             this.canvas.drawOval(Rect.makeXYWH((float) e.getMinX(), (float) e.getMinY(), (float) e.getWidth(), (float) e.getHeight()), this.skijaPaint);
         } else {
-            this.canvas.drawPath(path(s), this.skijaPaint);
+            try (final Path p = path(s)) {
+                this.canvas.drawPath(p, this.skijaPaint);
+            } // `p` will be freed right here
         }
     }
 
@@ -343,11 +419,13 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fill(Shape s) {
-        LOGGER.debug("fill({})", s);
+        if (LOG_ENABLED) {
+            LOGGER.debug("fill({})", s);
+        }
         this.skijaPaint.setMode(PaintMode.FILL);
         if (s instanceof Rectangle2D) {
             Rectangle2D r = (Rectangle2D) s;
-            if (r.getWidth() < 0.0 || r.getHeight() < 0.0) {
+            if (r.getWidth() <= 0.0 || r.getHeight() <= 0.0) {
                 return;
             }
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
@@ -355,16 +433,20 @@ public class SkijaGraphics2D extends Graphics2D {
             Ellipse2D e = (Ellipse2D) s;
             this.canvas.drawOval(Rect.makeXYWH((float) e.getMinX(), (float) e.getMinY(), (float) e.getWidth(), (float) e.getHeight()), this.skijaPaint);
         } else if (s instanceof Path2D) {
-            Path2D p = (Path2D) s;
-            Path path = path(s);
-            if (p.getWindingRule() == Path2D.WIND_EVEN_ODD) {
-                path.setFillMode(PathFillMode.EVEN_ODD);
-            } else {
-                path.setFillMode(PathFillMode.WINDING);
-            }
-            this.canvas.drawPath(path, this.skijaPaint);
+            final Path2D p2d = (Path2D) s;
+            
+            try (final Path p = path(s)) {
+                if (p2d.getWindingRule() == Path2D.WIND_EVEN_ODD) {
+                    p.setFillMode(PathFillMode.EVEN_ODD);
+                } else {
+                    p.setFillMode(PathFillMode.WINDING);
+                }
+                this.canvas.drawPath(p, this.skijaPaint);
+            } // `p` will be freed right here
         } else {
-            this.canvas.drawPath(path(s), this.skijaPaint);
+            try (final Path p = path(s)) {
+                this.canvas.drawPath(p, this.skijaPaint);
+            } // `p` will be freed right here
         }
     }
 
@@ -379,9 +461,11 @@ public class SkijaGraphics2D extends Graphics2D {
      * @return {@code true} if the image is drawn. 
      */
     @Override
-    public boolean drawImage(Image img, AffineTransform xform, 
-            ImageObserver obs) {
-        LOGGER.debug("drawImage(Image, AffineTransform, ImageObserver)");
+    public boolean drawImage(Image img, AffineTransform xform,
+                             ImageObserver obs) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(Image, AffineTransform, ImageObserver)");
+        }
         AffineTransform savedTransform = getTransform();
         if (xform != null) {
             transform(xform);
@@ -404,7 +488,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
-        LOGGER.debug("drawImage(BufferedImage, BufferedImageOp, {}, {})", x, y);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(BufferedImage, BufferedImageOp, {}, {})", x, y);
+        }
         BufferedImage imageToDraw = img;
         if (op != null) {
             imageToDraw = op.filter(img, null);
@@ -421,7 +507,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawRenderedImage(RenderedImage img, AffineTransform xform) {
-        LOGGER.debug("drawRenderedImage(RenderedImage, AffineTransform)");
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawRenderedImage(RenderedImage, AffineTransform)");
+        }
         if (img == null) { // to match the behaviour specified in the JDK
             return;
         }
@@ -436,9 +524,11 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param xform  the transform.
      */
     @Override
-    public void drawRenderableImage(RenderableImage img, 
-            AffineTransform xform) {
-        LOGGER.debug("drawRenderableImage(RenderableImage, AffineTransform xform)");
+    public void drawRenderableImage(RenderableImage img,
+                                    AffineTransform xform) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawRenderableImage(RenderableImage, AffineTransform xform)");
+        }
         RenderedImage ri = img.createDefaultRendering();
         drawRenderedImage(ri, xform);
     }
@@ -455,7 +545,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawString(String str, int x, int y) {
-        LOGGER.debug("drawString({}, {}, {}", str, x, y);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawString({}, {}, {}", str, x, y);
+        }
         drawString(str, (float) x, (float) y);
     }
 
@@ -472,7 +564,9 @@ public class SkijaGraphics2D extends Graphics2D {
         if (str == null) {
             throw new NullPointerException("Null 'str' argument.");
         }
-        LOGGER.debug("drawString({}, {}, {})", str, x, y);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawString({}, {}, {})", str, x, y);
+        }
         this.skijaPaint.setMode(PaintMode.FILL);
         this.canvas.drawString(str, x, y, this.skijaFont, this.skijaPaint);
     }
@@ -488,7 +582,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawString(AttributedCharacterIterator iterator, int x, int y) {
-        LOGGER.debug("drawString(AttributedCharacterIterator, {}, {}", x, y);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawString(AttributedCharacterIterator, {}, {}", x, y);
+        }
         drawString(iterator, (float) x, (float) y);
     }
 
@@ -501,24 +597,22 @@ public class SkijaGraphics2D extends Graphics2D {
      * @param y  the y-coordinate.
      */
     @Override
-    public void drawString(AttributedCharacterIterator iterator, float x, 
-            float y) {
-        LOGGER.debug("drawString(AttributedCharacterIterator, {}, {}", x, y);
-        Set<AttributedCharacterIterator.Attribute>
-                s = iterator.getAllAttributeKeys();
+    public void drawString(AttributedCharacterIterator iterator, float x,
+                           float y) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawString(AttributedCharacterIterator, {}, {}", x, y);
+        }
+        Set<AttributedCharacterIterator.Attribute> s = iterator.getAllAttributeKeys();
         if (!s.isEmpty()) {
-            TextLayout layout = new TextLayout(iterator, 
-                    getFontRenderContext());
+            TextLayout layout = new TextLayout(iterator, getFontRenderContext());
             layout.draw(this, x, y);
         } else {
-            StringBuilder strb = new StringBuilder();
+            final StringBuilder sb = new StringBuilder();
             iterator.first();
-            for (int i = iterator.getBeginIndex(); i < iterator.getEndIndex(); 
-                    i++) {
-                strb.append(iterator.current());
-                iterator.next();
+            for (int i = iterator.getBeginIndex(); i < iterator.getEndIndex(); i++, iterator.next()) {
+                sb.append(iterator.current());
             }
-            drawString(strb.toString(), x, y);
+            drawString(sb.toString(), x, y);
         }
     }
 
@@ -531,7 +625,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawGlyphVector(GlyphVector g, float x, float y) {
-        LOGGER.debug("drawGlyphVector(GlyphVector, {}, {})", x, y);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawGlyphVector(GlyphVector, {}, {})", x, y);
+        }
         fill(g.getOutline(x, y));
     }
 
@@ -548,7 +644,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
-        LOGGER.debug("hit(Rectangle, Shape, boolean)");
+        if (LOG_ENABLED) {
+            LOGGER.debug("hit(Rectangle, Shape, boolean)");
+        }
         Shape ts;
         if (onStroke) {
             ts = this.transform.createTransformedShape(
@@ -574,10 +672,9 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public GraphicsConfiguration getDeviceConfiguration() {
         if (this.deviceConfiguration == null) {
-            int width = this.width;
-            int height = this.height;
-            this.deviceConfiguration = new SkijaGraphicsConfiguration(width,
-                    height);
+            int w = this.width;
+            int h = this.height;
+            this.deviceConfiguration = new SkijaGraphicsConfiguration(w, h);
         }
         return this.deviceConfiguration;
     }
@@ -591,7 +688,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setComposite(Composite comp) {
-        LOGGER.debug("setComposite({})", comp);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setComposite({})", comp);
+        }
         if (comp == null) {
             throw new IllegalArgumentException("Null 'comp' argument.");
         }
@@ -639,7 +738,9 @@ public class SkijaGraphics2D extends Graphics2D {
 
     @Override
     public void setPaint(Paint paint) {
-        LOGGER.debug("setPaint({})", paint);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setPaint({})", paint);
+        }
         if (paint == null) {
             return;
         }
@@ -689,7 +790,7 @@ public class SkijaGraphics2D extends Graphics2D {
             float y1 = (float) gp.getPoint1().getY();
             float x2 = (float) gp.getPoint2().getX();
             float y2 = (float) gp.getPoint2().getY();
-            int[] colors = new int[] { gp.getColor1().getRGB(), gp.getColor2().getRGB()};
+            int[] colors = new int[]{gp.getColor1().getRGB(), gp.getColor2().getRGB()};
             GradientStyle gs = GradientStyle.DEFAULT;
             if (gp.isCyclic()) {
                 gs = GradientStyle.DEFAULT.withTileMode(FilterTileMode.MIRROR);
@@ -709,7 +810,9 @@ public class SkijaGraphics2D extends Graphics2D {
     @Override
     public void setStroke(Stroke s) {
         nullNotPermitted(s, "s");
-        LOGGER.debug("setStroke({})", stroke);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setStroke({})", stroke);
+        }
         if (s == this.stroke) { // quick test, full equals test later
             return;
         }
@@ -741,17 +844,18 @@ public class SkijaGraphics2D extends Graphics2D {
      * @return A Skija stroke cap value.
      */
     private PaintStrokeCap awtToSkijaLineCap(int c) {
-        if (c == BasicStroke.CAP_BUTT) {
-            return PaintStrokeCap.BUTT;
-        } else if (c == BasicStroke.CAP_ROUND) {
-            return PaintStrokeCap.ROUND;
-        } else if (c == BasicStroke.CAP_SQUARE) {
-            return PaintStrokeCap.SQUARE;
-        } else {
-            throw new IllegalArgumentException("Unrecognised cap code: " + c);
+        switch (c) {
+            case BasicStroke.CAP_BUTT:
+                return PaintStrokeCap.BUTT;
+            case BasicStroke.CAP_ROUND:
+                return PaintStrokeCap.ROUND;
+            case BasicStroke.CAP_SQUARE:
+                return PaintStrokeCap.SQUARE;
+            default:
+                throw new IllegalArgumentException("Unrecognised cap code: " + c);
         }
     }
- 
+
     /**
      * Maps a line join code from AWT to the corresponding Skija
      * {@code PaintStrokeJoin} enum value.
@@ -761,14 +865,15 @@ public class SkijaGraphics2D extends Graphics2D {
      * @return A Skija stroke join value.
      */
     private PaintStrokeJoin awtToSkijaLineJoin(int j) {
-        if (j == BasicStroke.JOIN_BEVEL) {
-            return PaintStrokeJoin.BEVEL;
-        } else if (j == BasicStroke.JOIN_MITER) {
-            return PaintStrokeJoin.MITER;
-        } else if (j == BasicStroke.JOIN_ROUND) {
-            return PaintStrokeJoin.ROUND;
-        } else {
-            throw new IllegalArgumentException("Unrecognised join code: " + j);            
+        switch (j) {
+            case BasicStroke.JOIN_BEVEL:
+                return PaintStrokeJoin.BEVEL;
+            case BasicStroke.JOIN_MITER:
+                return PaintStrokeJoin.MITER;
+            case BasicStroke.JOIN_ROUND:
+                return PaintStrokeJoin.ROUND;
+            default:
+                throw new IllegalArgumentException("Unrecognised join code: " + j);
         }
     }
 
@@ -782,10 +887,14 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     private FilterTileMode awtCycleMethodToSkijaFilterTileMode(MultipleGradientPaint.CycleMethod method) {
         switch (method) {
-            case NO_CYCLE: return FilterTileMode.CLAMP;
-            case REPEAT: return FilterTileMode.REPEAT;
-            case REFLECT: return FilterTileMode.MIRROR;
-            default: return FilterTileMode.CLAMP;
+            case NO_CYCLE:
+                return FilterTileMode.CLAMP;
+            case REPEAT:
+                return FilterTileMode.REPEAT;
+            case REFLECT:
+                return FilterTileMode.MIRROR;
+            default:
+                return FilterTileMode.CLAMP;
         }
     }
 
@@ -803,7 +912,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Object getRenderingHint(RenderingHints.Key hintKey) {
-        LOGGER.debug("getRenderingHint({})", hintKey);
+        if (LOG_ENABLED) {
+            LOGGER.debug("getRenderingHint({})", hintKey);
+        }
         return this.hints.get(hintKey);
     }
 
@@ -818,7 +929,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
-        LOGGER.debug("setRenderingHint({}, {})", hintKey, hintValue);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setRenderingHint({}, {})", hintKey, hintValue);
+        }
         this.hints.put(hintKey, hintValue);
     }
 
@@ -831,7 +944,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setRenderingHints(Map<?, ?> hints) {
-        LOGGER.debug("setRenderingHints(Map<?, ?>)");
+        if (LOG_ENABLED) {
+            LOGGER.debug("setRenderingHints(Map<?, ?>): {}", hints);
+        }
         this.hints.clear();
         this.hints.putAll(hints);
     }
@@ -843,7 +958,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void addRenderingHints(Map<?, ?> hints) {
-        LOGGER.debug("addRenderingHints(Map<?, ?>)");
+        if (LOG_ENABLED) {
+            LOGGER.debug("addRenderingHints(Map<?, ?>): {}", hints);
+        }
         this.hints.putAll(hints);
     }
 
@@ -858,7 +975,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public RenderingHints getRenderingHints() {
-        LOGGER.debug("getRenderingHints()");
+        if (LOG_ENABLED) {
+            LOGGER.debug("getRenderingHints()");
+        }
         return (RenderingHints) this.hints.clone();
     }
 
@@ -873,7 +992,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void translate(int tx, int ty) {
-        LOGGER.debug("translate({}, {})", tx, ty);
+        if (LOG_ENABLED) {
+            LOGGER.debug("translate({}, {})", tx, ty);
+        }
         translate((double) tx, (double) ty);
     }
 
@@ -885,7 +1006,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void translate(double tx, double ty) {
-        LOGGER.debug("translate({}, {})", tx, ty);
+        if (LOG_ENABLED) {
+            LOGGER.debug("translate({}, {})", tx, ty);
+        }
         this.transform.translate(tx, ty);
         this.canvas.translate((float) tx, (float) ty);
     }
@@ -897,7 +1020,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void rotate(double theta) {
-        LOGGER.debug("rotate({})", theta);
+        if (LOG_ENABLED) {
+            LOGGER.debug("rotate({})", theta);
+        }
         this.transform.rotate(theta);
         this.canvas.rotate((float) Math.toDegrees(theta));
     }
@@ -911,7 +1036,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void rotate(double theta, double x, double y) {
-        LOGGER.debug("rotate({}, {}, {})", theta, x, y);
+        if (LOG_ENABLED) {
+            LOGGER.debug("rotate({}, {}, {})", theta, x, y);
+        }
         translate(x, y);
         rotate(theta);
         translate(-x, -y);
@@ -925,7 +1052,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void scale(double sx, double sy) {
-        LOGGER.debug("scale({}, {})", sx, sy);
+        if (LOG_ENABLED) {
+            LOGGER.debug("scale({}, {})", sx, sy);
+        }
         this.transform.scale(sx, sy);
         this.canvas.scale((float) sx, (float) sy);
     }
@@ -943,7 +1072,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void shear(double shx, double shy) {
-        LOGGER.debug("shear({}, {})", shx, shy);
+        if (LOG_ENABLED) {
+            LOGGER.debug("shear({}, {})", shx, shy);
+        }
         this.transform.shear(shx, shy);
         this.canvas.skew((float) shx, (float) shy);
     }
@@ -955,7 +1086,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void transform(AffineTransform t) {
-        LOGGER.debug("transform(AffineTransform) : {}", t );
+        if (LOG_ENABLED) {
+            LOGGER.debug("transform(AffineTransform) : {}", t);
+        }
         AffineTransform tx = getTransform();
         tx.concatenate(t);
         setTransform(tx);
@@ -970,7 +1103,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public AffineTransform getTransform() {
-        LOGGER.debug("getTransform()");
+        if (LOG_ENABLED) {
+            LOGGER.debug("getTransform()");
+        }
         return (AffineTransform) this.transform.clone();
     }
 
@@ -984,7 +1119,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setTransform(AffineTransform t) {
-        LOGGER.debug("setTransform({})", t);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setTransform({})", t);
+        }
         if (t == null) {
             this.transform = new AffineTransform();
             t = this.transform;
@@ -1012,7 +1149,7 @@ public class SkijaGraphics2D extends Graphics2D {
     public Composite getComposite() {
         return this.composite;
     }
-    
+
     /**
      * Returns the background color (the default value is {@link Color#BLACK}).
      * This attribute is used by the {@link #clearRect(int, int, int, int)} 
@@ -1072,7 +1209,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Graphics create() {
-        LOGGER.debug("create()");
+        if (LOG_ENABLED) {
+            LOGGER.debug("create()");
+        }
         SkijaGraphics2D copy = new SkijaGraphics2D(this.canvas);
         copy.setRenderingHints(getRenderingHints());
         copy.clip = this.clip;
@@ -1088,7 +1227,9 @@ public class SkijaGraphics2D extends Graphics2D {
 
     @Override
     public Graphics create(int x, int y, int width, int height) {
-        LOGGER.debug("create({}, {}, {}, {})", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("create({}, {}, {}, {})", x, y, width, height);
+        }
         return super.create(x, y, width, height);
     }
 
@@ -1119,7 +1260,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setColor(Color c) {
-        LOGGER.debug("setColor(Color) : " + c);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setColor(Color) : {}", c);
+        }
         if (c == null || c.equals(this.color)) {
             return;
         }
@@ -1156,16 +1299,17 @@ public class SkijaGraphics2D extends Graphics2D {
     }
 
     private FontStyle awtFontStyleToSkijaFontStyle(int style) {
-        if (style == Font.PLAIN) {
-            return FontStyle.NORMAL;
-        } else if (style == Font.BOLD) {
-            return FontStyle.BOLD;
-        } else if (style == Font.ITALIC) {
-            return FontStyle.ITALIC;
-        } else if (style == Font.BOLD + Font.ITALIC) {
-            return FontStyle.BOLD_ITALIC;
-        } else {
-            return FontStyle.NORMAL;
+        switch (style) {
+            case Font.PLAIN:
+                return FontStyle.NORMAL;
+            case Font.BOLD:
+                return FontStyle.BOLD;
+            case Font.ITALIC:
+                return FontStyle.ITALIC;
+            case Font.BOLD + Font.ITALIC:
+                return FontStyle.BOLD_ITALIC;
+            default:
+                return FontStyle.NORMAL;
         }
     }
 
@@ -1178,18 +1322,23 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setFont(Font font) {
-        LOGGER.debug("setFont({})", font);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setFont({})", font);
+        }
         if (font == null) {
             return;
         }
         this.awtFont = font;
         String fontName = font.getName();
         // check if there is a font name mapping to apply
-        Function fontMapping = (Function) getRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION);
-        if (fontMapping != null) {
-            String mappedFontName = (String) fontMapping.apply(fontName);
+        @SuppressWarnings("unchecked")
+        Function<String, String> fm = (Function<String, String>) getRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION);
+        if (fm != null) {
+            String mappedFontName = fm.apply(fontName);
             if (mappedFontName != null) {
-                LOGGER.debug("Mapped font name is {}", mappedFontName);
+                if (LOG_ENABLED) {
+                    LOGGER.debug("Mapped font name is {}", mappedFontName);
+                }
                 fontName = mappedFontName;
             }
         }
@@ -1214,7 +1363,7 @@ public class SkijaGraphics2D extends Graphics2D {
     public FontMetrics getFontMetrics(Font f) {
         return new SkijaFontMetrics(this.skijaFont, this.awtFont);
     }
-    
+
     /**
      * Returns the bounds of the user clipping region.
      * 
@@ -1240,7 +1389,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public Shape getClip() {
-        LOGGER.debug("getClip()");
+        if (LOG_ENABLED) {
+            LOGGER.debug("getClip()");
+        }
         if (this.clip == null) {
             return null;
         }
@@ -1261,7 +1412,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setClip(Shape shape) {
-        LOGGER.debug("setClip({})",  shape);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setClip({})", shape);
+        }
         // null is handled fine here...
         // a new clip is being set, so first restore the original clip (and save
         // it again for future restores)
@@ -1275,7 +1428,7 @@ public class SkijaGraphics2D extends Graphics2D {
             this.canvas.clipPath(path(shape));
         }
     }
-    
+
     /**
      * Clips to the intersection of the current clipping region and the 
      * specified rectangle.
@@ -1287,7 +1440,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void clipRect(int x, int y, int width, int height) {
-        LOGGER.debug("clipRect({}, {}, {}, {})", x, y , width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("clipRect({}, {}, {}, {})", x, y, width, height);
+        }
         clip(rect(x, y, width, height));
     }
 
@@ -1303,7 +1458,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void setClip(int x, int y, int width, int height) {
-        LOGGER.debug("setClip({}, {}, {}, {})", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("setClip({}, {}, {}, {})", x, y, width, height);
+        }
         setClip(rect(x, y, width, height));
     }
 
@@ -1322,7 +1479,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void clip(Shape s) {
-        LOGGER.debug("clip({})", s);
+        if (LOG_ENABLED) {
+            LOGGER.debug("clip({})", s);
+        }
         if (s instanceof Line2D) {
             s = s.getBounds2D();
         }
@@ -1333,11 +1492,11 @@ public class SkijaGraphics2D extends Graphics2D {
         if (!s.intersects(getClip().getBounds2D())) {
             setClip(new Rectangle2D.Double());
         } else {
-          Area a1 = new Area(s);
-          Area a2 = new Area(getClip());
-          a1.intersect(a2);
-          setClip(new Path2D.Double(a1));
-          this.canvas.clipPath(path(s));
+            Area a1 = new Area(s);
+            Area a2 = new Area(getClip());
+            a1.intersect(a2);
+            setClip(new Path2D.Double(a1));
+            this.canvas.clipPath(path(s));
         }
     }
 
@@ -1353,7 +1512,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void copyArea(int x, int y, int width, int height, int dx, int dy) {
-        LOGGER.debug("copyArea({}, {}, {}, {}, {}, {}) - NOT IMPLEMENTED", x, y, width, height, dx, dy);
+        if (LOG_ENABLED) {
+            LOGGER.debug("copyArea({}, {}, {}, {}, {}, {}) - NOT IMPLEMENTED", x, y, width, height, dx, dy);
+        }
         // FIXME: implement this, low priority
     }
 
@@ -1368,7 +1529,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawLine(int x1, int y1, int x2, int y2) {
-        LOGGER.debug("drawLine()");
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawLine()");
+        }
         if (this.line == null) {
             this.line = new Line2D.Double(x1, y1, x2, y2);
         } else {
@@ -1387,7 +1550,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fillRect(int x, int y, int width, int height) {
-        LOGGER.debug("fillRect({}, {}, {}, {})", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("fillRect({}, {}, {}, {})", x, y, width, height);
+        }
         fill(rect(x, y, width, height));
     }
 
@@ -1405,7 +1570,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void clearRect(int x, int y, int width, int height) {
-        LOGGER.debug("clearRect({}, {}, {}, {})", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("clearRect({}, {}, {}, {})", x, y, width, height);
+        }
         if (getBackground() == null) {
             return;  // we can't do anything
         }
@@ -1450,9 +1617,11 @@ public class SkijaGraphics2D extends Graphics2D {
      * @see #fillRoundRect(int, int, int, int, int, int) 
      */
     @Override
-    public void drawRoundRect(int x, int y, int width, int height, 
-            int arcWidth, int arcHeight) {
-        LOGGER.debug("drawRoundRect({}, {}, {}, {}, {}, {})", x, y, width, height, arcWidth, arcHeight);
+    public void drawRoundRect(int x, int y, int width, int height,
+                              int arcWidth, int arcHeight) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawRoundRect({}, {}, {}, {}, {}, {})", x, y, width, height, arcWidth, arcHeight);
+        }
         draw(roundRect(x, y, width, height, arcWidth, arcHeight));
     }
 
@@ -1469,12 +1638,14 @@ public class SkijaGraphics2D extends Graphics2D {
      * @see #drawRoundRect(int, int, int, int, int, int) 
      */
     @Override
-    public void fillRoundRect(int x, int y, int width, int height, 
-            int arcWidth, int arcHeight) {
-        LOGGER.debug("fillRoundRect({}, {}, {}, {}, {}, {})", x, y, width, height, arcWidth, arcHeight);
+    public void fillRoundRect(int x, int y, int width, int height,
+                              int arcWidth, int arcHeight) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("fillRoundRect({}, {}, {}, {}, {}, {})", x, y, width, height, arcWidth, arcHeight);
+        }
         fill(roundRect(x, y, width, height, arcWidth, arcHeight));
     }
-    
+
     /**
      * Sets the attributes of the reusable {@link RoundRectangle2D} object that
      * is used by the {@link #drawRoundRect(int, int, int, int, int, int)} and
@@ -1489,13 +1660,13 @@ public class SkijaGraphics2D extends Graphics2D {
      * 
      * @return A round rectangle (never {@code null}).
      */
-    private RoundRectangle2D roundRect(int x, int y, int width, int height, 
-            int arcWidth, int arcHeight) {
+    private RoundRectangle2D roundRect(int x, int y, int width, int height,
+                                       int arcWidth, int arcHeight) {
         if (this.roundRect == null) {
-            this.roundRect = new RoundRectangle2D.Double(x, y, width, height, 
+            this.roundRect = new RoundRectangle2D.Double(x, y, width, height,
                     arcWidth, arcHeight);
         } else {
-            this.roundRect.setRoundRect(x, y, width, height, 
+            this.roundRect.setRoundRect(x, y, width, height,
                     arcWidth, arcHeight);
         }
         return this.roundRect;
@@ -1514,7 +1685,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawOval(int x, int y, int width, int height) {
-        LOGGER.debug("drawOval({}, {}, {}, {})", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawOval({}, {}, {}, {})", x, y, width, height);
+        }
         draw(oval(x, y, width, height));
     }
 
@@ -1530,7 +1703,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fillOval(int x, int y, int width, int height) {
-        LOGGER.debug("fillOval({}, {}, {}, {})", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("fillOval({}, {}, {}, {})", x, y, width, height);
+        }
         fill(oval(x, y, width, height));
     }
 
@@ -1572,9 +1747,11 @@ public class SkijaGraphics2D extends Graphics2D {
      * @see #fillArc(int, int, int, int, int, int) 
      */
     @Override
-    public void drawArc(int x, int y, int width, int height, int startAngle, 
-            int arcAngle) {
-        LOGGER.debug("drawArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
+    public void drawArc(int x, int y, int width, int height, int startAngle,
+                        int arcAngle) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
+        }
         draw(arc(x, y, width, height, startAngle, arcAngle));
     }
 
@@ -1594,9 +1771,11 @@ public class SkijaGraphics2D extends Graphics2D {
      * @see #drawArc(int, int, int, int, int, int) 
      */
     @Override
-    public void fillArc(int x, int y, int width, int height, int startAngle, 
-            int arcAngle) {
-        LOGGER.debug("fillArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
+    public void fillArc(int x, int y, int width, int height, int startAngle,
+                        int arcAngle) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("fillArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
+        }
         fill(arc(x, y, width, height, startAngle, arcAngle));
     }
 
@@ -1614,18 +1793,18 @@ public class SkijaGraphics2D extends Graphics2D {
      * 
      * @return An arc (never {@code null}).
      */
-    private Arc2D arc(int x, int y, int width, int height, int startAngle, 
-            int arcAngle) {
+    private Arc2D arc(int x, int y, int width, int height, int startAngle,
+                      int arcAngle) {
         if (this.arc == null) {
-            this.arc = new Arc2D.Double(x, y, width, height, startAngle, 
+            this.arc = new Arc2D.Double(x, y, width, height, startAngle,
                     arcAngle, Arc2D.OPEN);
         } else {
-            this.arc.setArc(x, y, width, height, startAngle, arcAngle, 
+            this.arc.setArc(x, y, width, height, startAngle, arcAngle,
                     Arc2D.OPEN);
         }
         return this.arc;
     }
-            
+
     /**
      * Draws the specified multi-segment line using the current 
      * {@code paint} and {@code stroke}.
@@ -1636,7 +1815,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
-        LOGGER.debug("drawPolyline(int[], int[], int)");
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawPolyline(int[], int[], int)");
+        }
         GeneralPath p = createPolygon(xPoints, yPoints, nPoints, false);
         draw(p);
     }
@@ -1652,7 +1833,9 @@ public class SkijaGraphics2D extends Graphics2D {
      * @see #fillPolygon(int[], int[], int)      */
     @Override
     public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-        LOGGER.debug("drawPolygon(int[], int[], int)");
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawPolygon(int[], int[], int)");
+        }
         GeneralPath p = createPolygon(xPoints, yPoints, nPoints, true);
         draw(p);
     }
@@ -1668,7 +1851,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-        LOGGER.debug("fillPolygon(int[], int[], int)");
+        if (LOG_ENABLED) {
+            LOGGER.debug("fillPolygon(int[], int[], int)");
+        }
         GeneralPath p = createPolygon(xPoints, yPoints, nPoints, true);
         fill(p);
     }
@@ -1684,9 +1869,11 @@ public class SkijaGraphics2D extends Graphics2D {
      * 
      * @return A polygon.
      */
-    public GeneralPath createPolygon(int[] xPoints, int[] yPoints, 
-            int nPoints, boolean close) {
-        LOGGER.debug("createPolygon(int[], int[], int, boolean)");
+    public GeneralPath createPolygon(int[] xPoints, int[] yPoints,
+                                     int nPoints, boolean close) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("createPolygon(int[], int[], int, boolean)");
+        }
         GeneralPath p = new GeneralPath();
         p.moveTo(xPoints[0], yPoints[0]);
         for (int i = 1; i < nPoints; i++) {
@@ -1711,7 +1898,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
-        LOGGER.debug("drawImage(Image, {}, {}, ImageObserver)", x, y);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(Image, {}, {}, ImageObserver)", x, y);
+        }
         if (img == null) {
             return true;
         }
@@ -1742,7 +1931,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
-        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, ImageObserver)", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(Image, {}, {}, {}, {}, ImageObserver)", x, y, width, height);
+        }
         final BufferedImage buffered;
         if (img instanceof BufferedImage) {
             buffered = (BufferedImage) img;
@@ -1771,9 +1962,11 @@ public class SkijaGraphics2D extends Graphics2D {
      * @return {@code true} if there is no more drawing to be done. 
      */
     @Override
-    public boolean drawImage(Image img, int x, int y, Color bgcolor, 
-            ImageObserver observer) {
-        LOGGER.debug("drawImage(Image, {}, {}, Color, ImageObserver)", x, y);
+    public boolean drawImage(Image img, int x, int y, Color bgcolor,
+                             ImageObserver observer) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(Image, {}, {}, Color, ImageObserver)", x, y);
+        }
         if (img == null) {
             return true;
         }
@@ -1790,7 +1983,9 @@ public class SkijaGraphics2D extends Graphics2D {
 
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
-        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, Color, ImageObserver)", x, y, width, height);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(Image, {}, {}, {}, {}, Color, ImageObserver)", x, y, width, height);
+        }
         Paint saved = getPaint();
         setPaint(bgcolor);
         fillRect(x, y, width, height);
@@ -1818,7 +2013,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
-        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, {}, {}, {}, {}, ImageObserver)", dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(Image, {}, {}, {}, {}, {}, {}, {}, {}, ImageObserver)", dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2);
+        }
         int w = dx2 - dx1;
         int h = dy2 - dy1;
         BufferedImage img2 = new BufferedImage(w, h,
@@ -1851,7 +2048,9 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgcolor, ImageObserver observer) {
-        LOGGER.debug("drawImage(Image, {}, {}, {}, {}, {}, {}, {}, {}, Color, ImageObserver)", dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2);
+        if (LOG_ENABLED) {
+            LOGGER.debug("drawImage(Image, {}, {}, {}, {}, {}, {}, {}, {}, Color, ImageObserver)", dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2);
+        }
         Paint saved = getPaint();
         setPaint(bgcolor);
         fillRect(dx1, dy1, dx2 - dx1, dy2 - dy1);
@@ -1864,10 +2063,12 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     @Override
     public void dispose() {
-        LOGGER.debug("dispose()");
+        if (LOG_ENABLED) {
+            LOGGER.debug("dispose()");
+        }
         this.canvas.restoreToCount(this.restoreCount);
     }
- 
+
     /**
      * Returns {@code true} if the two {@code Paint} objects are equal 
      * OR both {@code null}.  This method handles
@@ -1884,13 +2085,13 @@ public class SkijaGraphics2D extends Graphics2D {
         if (p1 == p2) {
             return true;
         }
-            
+
         // handle cases where either or both arguments are null
         if (p1 == null) {
-            return (p2 == null);   
+            return (p2 == null);
         }
         if (p2 == null) {
-            return false;   
+            return false;
         }
 
         // handle cases...
@@ -1900,31 +2101,31 @@ public class SkijaGraphics2D extends Graphics2D {
         if (p1 instanceof GradientPaint && p2 instanceof GradientPaint) {
             GradientPaint gp1 = (GradientPaint) p1;
             GradientPaint gp2 = (GradientPaint) p2;
-            return gp1.getColor1().equals(gp2.getColor1()) 
+            return gp1.getColor1().equals(gp2.getColor1())
                     && gp1.getColor2().equals(gp2.getColor2())
-                    && gp1.getPoint1().equals(gp2.getPoint1())    
+                    && gp1.getPoint1().equals(gp2.getPoint1())
                     && gp1.getPoint2().equals(gp2.getPoint2())
                     && gp1.isCyclic() == gp2.isCyclic()
-                    && gp1.getTransparency() == gp1.getTransparency(); 
-        } 
-        if (p1 instanceof LinearGradientPaint 
+                    && gp1.getTransparency() == gp1.getTransparency();
+        }
+        if (p1 instanceof LinearGradientPaint
                 && p2 instanceof LinearGradientPaint) {
             LinearGradientPaint lgp1 = (LinearGradientPaint) p1;
             LinearGradientPaint lgp2 = (LinearGradientPaint) p2;
             return lgp1.getStartPoint().equals(lgp2.getStartPoint())
-                    && lgp1.getEndPoint().equals(lgp2.getEndPoint()) 
+                    && lgp1.getEndPoint().equals(lgp2.getEndPoint())
                     && Arrays.equals(lgp1.getFractions(), lgp2.getFractions())
                     && Arrays.equals(lgp1.getColors(), lgp2.getColors())
                     && lgp1.getCycleMethod() == lgp2.getCycleMethod()
                     && lgp1.getColorSpace() == lgp2.getColorSpace()
                     && lgp1.getTransform().equals(lgp2.getTransform());
-        } 
-        if (p1 instanceof RadialGradientPaint 
+        }
+        if (p1 instanceof RadialGradientPaint
                 && p2 instanceof RadialGradientPaint) {
             RadialGradientPaint rgp1 = (RadialGradientPaint) p1;
             RadialGradientPaint rgp2 = (RadialGradientPaint) p2;
             return rgp1.getCenterPoint().equals(rgp2.getCenterPoint())
-                    && rgp1.getRadius() == rgp2.getRadius() 
+                    && rgp1.getRadius() == rgp2.getRadius()
                     && rgp1.getFocusPoint().equals(rgp2.getFocusPoint())
                     && Arrays.equals(rgp1.getFractions(), rgp2.getFractions())
                     && Arrays.equals(rgp1.getColors(), rgp2.getColors())
@@ -1934,7 +2135,7 @@ public class SkijaGraphics2D extends Graphics2D {
         }
         return p1.equals(p2);
     }
-    
+
     /**
      * Converts a rendered image to a {@code BufferedImage}.  This utility
      * method has come from a forum post by Jim Moore at:
@@ -1948,7 +2149,7 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     private static BufferedImage convertRenderedImage(RenderedImage img) {
         if (img instanceof BufferedImage) {
-            return (BufferedImage) img;	
+            return (BufferedImage) img;
         }
         ColorModel cm = img.getColorModel();
         int width = img.getWidth();
@@ -1962,7 +2163,7 @@ public class SkijaGraphics2D extends Graphics2D {
                 properties.put(key, img.getProperty(key));
             }
         }
-        BufferedImage result = new BufferedImage(cm, raster, 
+        BufferedImage result = new BufferedImage(cm, raster,
                 isAlphaPremultiplied, properties);
         img.copyData(raster);
         return result;
@@ -1977,7 +2178,7 @@ public class SkijaGraphics2D extends Graphics2D {
         DataBufferInt db = (DataBufferInt) img.getRaster().getDataBuffer();
         int[] pixels = db.getData();
         byte[] bytes = new byte[pixels.length * 4];
-        for (int i = 0; i < pixels.length ; i++) {
+        for (int i = 0; i < pixels.length; i++) {
             int p = pixels[i];
             bytes[i * 4 + 3] = (byte) ((p & 0xFF000000) >> 24);
             bytes[i * 4 + 2] = (byte) ((p & 0xFF0000) >> 16);
