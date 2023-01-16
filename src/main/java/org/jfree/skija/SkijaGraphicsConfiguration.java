@@ -35,7 +35,12 @@
 
 package org.jfree.skija;
 
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.ImageCapabilities;
+import java.awt.Rectangle;
+import java.awt.Transparency;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -45,7 +50,7 @@ import java.awt.image.VolatileImage;
 /**
  * A graphics configuration for the {@link SkijaGraphics2D} class.
  */
-public class SkijaGraphicsConfiguration extends GraphicsConfiguration {
+public final class SkijaGraphicsConfiguration extends GraphicsConfiguration {
 
     private GraphicsDevice device;
 
@@ -96,12 +101,13 @@ public class SkijaGraphicsConfiguration extends GraphicsConfiguration {
      */
     @Override
     public ColorModel getColorModel(int transparency) {
-        if (transparency == Transparency.TRANSLUCENT) {
-            return ColorModel.getRGBdefault();
-        } else if (transparency == Transparency.OPAQUE) {
-            return new DirectColorModel(32, 0x00ff0000, 0x0000ff00, 0x000000ff);
-        } else {
-            return null;
+        switch (transparency) {
+            case Transparency.TRANSLUCENT:
+                return ColorModel.getRGBdefault();
+            case Transparency.OPAQUE:
+                return new DirectColorModel(32, 0x00ff0000, 0x0000ff00, 0x000000ff);
+            default:
+                return null;
         }
     }
 

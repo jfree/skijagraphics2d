@@ -40,7 +40,7 @@ import io.github.humbleui.skija.FontStyle;
 /**
  * A key used to identify a {@code Typeface} in a map used to cache items.
  */
-public class TypefaceKey {
+public final class TypefaceKey {
 
     private final String fontName;
 
@@ -77,12 +77,18 @@ public class TypefaceKey {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         TypefaceKey that = (TypefaceKey) o;
 
-        if (!fontName.equals(that.fontName)) return false;
+        if (!fontName.equals(that.fontName)) {
+            return false;
+        }
         return style.equals(that.style);
     }
 

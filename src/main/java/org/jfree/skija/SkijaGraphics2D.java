@@ -34,38 +34,110 @@
  */
 package org.jfree.skija;
 
+import io.github.humbleui.skija.BlendMode;
 import io.github.humbleui.skija.Canvas;
-import io.github.humbleui.skija.*;
+import io.github.humbleui.skija.ColorAlphaType;
+import io.github.humbleui.skija.ColorType;
+import io.github.humbleui.skija.FilterTileMode;
+import io.github.humbleui.skija.FontStyle;
+import io.github.humbleui.skija.GradientStyle;
+import io.github.humbleui.skija.ImageInfo;
+import io.github.humbleui.skija.Matrix33;
+import io.github.humbleui.skija.PaintMode;
+import io.github.humbleui.skija.PaintStrokeCap;
+import io.github.humbleui.skija.PaintStrokeJoin;
+import io.github.humbleui.skija.Path;
+import io.github.humbleui.skija.PathEffect;
+import io.github.humbleui.skija.PathFillMode;
+import io.github.humbleui.skija.Shader;
+import io.github.humbleui.skija.Surface;
+import io.github.humbleui.skija.Typeface;
 import io.github.humbleui.types.Rect;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.Image;
+import java.awt.LinearGradientPaint;
+import java.awt.MultipleGradientPaint;
+import static java.awt.MultipleGradientPaint.CycleMethod.NO_CYCLE;
+import static java.awt.MultipleGradientPaint.CycleMethod.REFLECT;
+import static java.awt.MultipleGradientPaint.CycleMethod.REPEAT;
 import java.awt.Paint;
-import java.awt.*;
+import java.awt.RadialGradientPaint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextLayout;
-import java.awt.geom.*;
-import java.awt.image.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBufferInt;
+import java.awt.image.ImageObserver;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of the Graphics2D API that targets the Skija graphics API
  * (https://github.com/JetBrains/skija).
  */
-public class SkijaGraphics2D extends Graphics2D {
+public final class SkijaGraphics2D extends Graphics2D {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SkijaGraphics2D.class);
 
     /** The line width to use when a BasicStroke with line width = 0.0 is applied. */
     private static final double MIN_LINE_WIDTH = 0.1;
+
+    /** default paint */
+    private static final Color DEFAULT_PAINT = Color.BLACK;
+    /** default stroke */
+    private static final Stroke DEFAULT_STROKE = new BasicStroke(1.0f);
+    /** default font */
+    private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
+
+    /** font mapping */
+    private final static Map<String, String> FONT_MAPPING = createDefaultFontMap();
+
+    private final static Map<TypefaceKey, Typeface> TYPEFACE_MAP = Collections.synchronizedMap(new HashMap<>(16));
+
+    /** 
+     * The font render context.  The fractional metrics flag solves the glyph
+     * positioning issue identified by Christoph Nahr:
+     * http://news.kynosarges.org/2014/06/28/glyph-positioning-in-jfreesvg-orsonpdf/
+     */
+    private final static FontRenderContext DEFAULT_FONT_RENDER_CONTEXT = new FontRenderContext(
+            null, false, true);
 
     /* members */
     /** log enabled in constructor if logger is at debug level (low perf overhead) */
@@ -93,20 +165,18 @@ public class SkijaGraphics2D extends Graphics2D {
     private Paint awtPaint;
 
     /** Stores the AWT Color object for get/setColor(). */
-    private Color color = Color.BLACK;
+    private Color color;
 
-    private Stroke stroke = new BasicStroke(1.0f);
+    private Stroke stroke;
 
-    private Font awtFont = new Font("SansSerif", Font.PLAIN, 12);
+    private Font awtFont;
 
     private Typeface typeface;
-
-    private final Map<TypefaceKey, Typeface> typefaceMap = new HashMap<>();
 
     private io.github.humbleui.skija.Font skijaFont;
 
     /** The background color, used in the {@code clearRect()} method. */
-    private Color background = Color.BLACK;
+    private Color background;
 
     private AffineTransform transform = new AffineTransform();
 
@@ -117,12 +187,9 @@ public class SkijaGraphics2D extends Graphics2D {
     Shape clip;
 
     /** 
-     * The font render context.  The fractional metrics flag solves the glyph
-     * positioning issue identified by Christoph Nahr:
-     * http://news.kynosarges.org/2014/06/28/glyph-positioning-in-jfreesvg-orsonpdf/
+     * The font render context.
      */
-    private final FontRenderContext fontRenderContext = new FontRenderContext(
-            null, false, true);
+    private final FontRenderContext fontRenderContext = DEFAULT_FONT_RENDER_CONTEXT;
 
     /**
      * An instance that is lazily instantiated in drawLine and then 
@@ -160,6 +227,12 @@ public class SkijaGraphics2D extends Graphics2D {
      */
     private GraphicsConfiguration deviceConfiguration;
 
+    /** Used and reused in the path() method below. */
+    private final double[] coords = new double[6];
+
+    /** Used and reused in the drawString() method below. */
+    private final StringBuilder sbStr = new StringBuilder(256);
+
     /**
      * Throws an {@code IllegalArgumentException} if {@code arg} is
      * {@code null}.
@@ -182,7 +255,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @return A map.
      */
     public static Map<String, String> createDefaultFontMap() {
-        Map<String, String> result = new HashMap<>(8);
+        final Map<String, String> result = new HashMap<>(8);
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) { // Windows
             result.put(Font.MONOSPACED, "Courier New");
@@ -202,15 +275,13 @@ public class SkijaGraphics2D extends Graphics2D {
         return result;
     }
 
-    private Map<String, String> fontMapping;
-
     /**
      * Creates a new instance with the specified height and width.
      *
      * @param width  the width.
      * @param height  the height.
      */
-    public SkijaGraphics2D(int width, int height) {
+    public SkijaGraphics2D(final int width, final int height) {
         LOG_ENABLED = LOGGER.isDebugEnabled();
         if (LOG_ENABLED) {
             LOGGER.debug("SkijaGraphics2D({}, {})", width, height);
@@ -218,8 +289,6 @@ public class SkijaGraphics2D extends Graphics2D {
         this.width = width;
         this.height = height;
         this.surface = Surface.makeRasterN32Premul(width, height);
-        this.fontMapping = createDefaultFontMap();
-        setRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION, (Function<String, String>) s -> SkijaGraphics2D.this.fontMapping.get(s));
         init(surface.getCanvas());
     }
 
@@ -229,7 +298,7 @@ public class SkijaGraphics2D extends Graphics2D {
      *
      * @param canvas  the canvas ({@code null} not permitted).
      */
-    public SkijaGraphics2D(Canvas canvas) {
+    public SkijaGraphics2D(final Canvas canvas) {
         LOG_ENABLED = LOGGER.isDebugEnabled();
         if (LOG_ENABLED) {
             LOGGER.debug("SkijaGraphics2D(Canvas)");
@@ -238,22 +307,76 @@ public class SkijaGraphics2D extends Graphics2D {
     }
 
     /**
-     * Creates a new instance using an existing canvas.
+     * Copy-constructor: creates a new instance with the given parent SkijaGraphics2D.
      *
-     * @param canvas  the canvas ({@code null} not permitted).
+     * @param parent SkijaGraphics2D instance to copy ({@code null} not permitted).
      */
-    private void init(Canvas canvas) {
+    private SkijaGraphics2D(final SkijaGraphics2D parent) {
+        LOG_ENABLED = LOGGER.isDebugEnabled();
+        if (LOG_ENABLED) {
+            LOGGER.debug("SkijaGraphics2D(parent)");
+        }
+        nullNotPermitted(parent, "parent");
+
+        this.canvas = parent.getCanvas();
+
         nullNotPermitted(canvas, "canvas");
-        this.canvas = canvas;
-        this.skijaPaint = new io.github.humbleui.skija.Paint().setColor(0xFF000000);
-        this.typeface = Typeface.makeFromName(this.awtFont.getFontName(), FontStyle.NORMAL);
-        this.skijaFont = new io.github.humbleui.skija.Font(typeface, 12);
+
+        this.setRenderingHints(parent.getRenderingHintsInternally());
+
+        if (getRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION) == null) {
+            setRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION, (Function<String, String>) s -> FONT_MAPPING.get(s));
+        }
+        this.clip = parent.clip;
+        this.setBackground(parent.getBackground());
+        this.skijaPaint = new io.github.humbleui.skija.Paint().setColor(DEFAULT_PAINT.getRGB());
+        this.setPaint(parent.getPaint());
+        this.setComposite(parent.getComposite());
+        this.setStroke(parent.getStroke());
+        this.setFont(parent.getFont());
+        this.setTransform(parent.getTransformInternally());
 
         // save the original clip settings so they can be restored later in setClip()
         this.restoreCount = this.canvas.save();
         if (LOG_ENABLED) {
             LOGGER.debug("restoreCount updated to {}", this.restoreCount);
         }
+    }
+
+    /**
+     * Creates a new instance using an existing canvas.
+     *
+     * @param canvas  the canvas ({@code null} not permitted).
+     */
+    private void init(final Canvas canvas) {
+        nullNotPermitted(canvas, "canvas");
+        this.canvas = canvas;
+
+        if (getRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION) == null) {
+            setRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION, (Function<String, String>) s -> FONT_MAPPING.get(s));
+        }
+
+        // use constants for quick initialization:
+        this.background = DEFAULT_PAINT;
+        this.skijaPaint = new io.github.humbleui.skija.Paint().setColor(DEFAULT_PAINT.getRGB());
+        setPaint(DEFAULT_PAINT);
+        setStroke(DEFAULT_STROKE);
+        // use TYPEFACE_MAP cache:
+        setFont(DEFAULT_FONT);
+
+        // save the original clip settings so they can be restored later in setClip()
+        this.restoreCount = this.canvas.save();
+        if (LOG_ENABLED) {
+            LOGGER.debug("restoreCount updated to {}", this.restoreCount);
+        }
+    }
+
+    public boolean isCompatibleCanvas(final Canvas canvas) {
+        return this.canvas == canvas;
+    }
+
+    private Canvas getCanvas() {
+        return this.canvas;
     }
 
     /**
@@ -265,9 +388,6 @@ public class SkijaGraphics2D extends Graphics2D {
         return this.surface;
     }
 
-    /** Used and reused in the path() method below. */
-    private final double[] coords = new double[6];
-
     /**
      * Creates a Skija path from the outline of a Java2D shape.
      *
@@ -276,7 +396,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @return A path.
      */
     private Path path(final Shape shape) {
-        final Path p = new Path();
+        final Path p = new Path(); // TODO: reuse Path instances or not (async safety) ?
 
         for (final PathIterator iterator = shape.getPathIterator(null); !iterator.isDone(); iterator.next()) {
             final int segType = iterator.currentSegment(coords);
@@ -382,7 +502,7 @@ public class SkijaGraphics2D extends Graphics2D {
             this.canvas.drawOval(Rect.makeXYWH((float) e.getMinX(), (float) e.getMinY(), (float) e.getWidth(), (float) e.getHeight()), this.skijaPaint);
         } else if (s instanceof Path2D) {
             final Path2D p2d = (Path2D) s;
-            
+
             try (final Path p = path(s)) {
                 if (p2d.getWindingRule() == Path2D.WIND_EVEN_ODD) {
                     p.setFillMode(PathFillMode.EVEN_ODD);
@@ -550,12 +670,13 @@ public class SkijaGraphics2D extends Graphics2D {
         if (LOG_ENABLED) {
             LOGGER.debug("drawString(AttributedCharacterIterator, {}, {}", x, y);
         }
-        Set<AttributedCharacterIterator.Attribute> s = iterator.getAllAttributeKeys();
+        final Set<AttributedCharacterIterator.Attribute> s = iterator.getAllAttributeKeys();
         if (!s.isEmpty()) {
-            TextLayout layout = new TextLayout(iterator, getFontRenderContext());
+            final TextLayout layout = new TextLayout(iterator, getFontRenderContext());
             layout.draw(this, x, y);
         } else {
-            final StringBuilder sb = new StringBuilder();
+            final StringBuilder sb = sbStr; // not thread-safe
+            sb.setLength(0);
             iterator.first();
             for (int i = iterator.getBeginIndex(); i < iterator.getEndIndex(); i++, iterator.next()) {
                 sb.append(iterator.current());
@@ -605,8 +726,10 @@ public class SkijaGraphics2D extends Graphics2D {
         if (!rect.getBounds2D().intersects(ts.getBounds2D())) {
             return false;
         }
-        Area a1 = new Area(rect);
-        Area a2 = new Area(ts);
+        // note: Area class is very slow (especially for rect):
+        // TODO: Faster to test ts.getBounds2D() overlaps rect:
+        final Area a1 = new Area(rect);
+        final Area a2 = new Area(ts);
         a1.intersect(a2);
         return !a1.isEmpty();
     }
@@ -646,6 +769,7 @@ public class SkijaGraphics2D extends Graphics2D {
         if (comp instanceof AlphaComposite) {
             AlphaComposite ac = (AlphaComposite) comp;
             this.skijaPaint.setAlphaf(ac.getAlpha());
+
             switch (ac.getRule()) {
                 case AlphaComposite.CLEAR:
                     this.skijaPaint.setBlendMode(BlendMode.CLEAR);
@@ -697,35 +821,37 @@ public class SkijaGraphics2D extends Graphics2D {
         }
         this.awtPaint = paint;
         if (paint instanceof Color) {
-            Color c = (Color) paint;
+            final Color c = (Color) paint;
             this.color = c;
             this.skijaPaint.setShader(Shader.makeColor(c.getRGB()));
         } else if (paint instanceof LinearGradientPaint) {
-            LinearGradientPaint lgp = (LinearGradientPaint) paint;
+            final LinearGradientPaint lgp = (LinearGradientPaint) paint;
             float x0 = (float) lgp.getStartPoint().getX();
             float y0 = (float) lgp.getStartPoint().getY();
             float x1 = (float) lgp.getEndPoint().getX();
             float y1 = (float) lgp.getEndPoint().getY();
-            int[] colors = new int[lgp.getColors().length];
+
+            final int[] colors = new int[lgp.getColors().length];
             for (int i = 0; i < lgp.getColors().length; i++) {
                 colors[i] = lgp.getColors()[i].getRGB();
             }
-            float[] fractions = lgp.getFractions();
-            GradientStyle gs = GradientStyle.DEFAULT.withTileMode(awtCycleMethodToSkijaFilterTileMode(lgp.getCycleMethod()));
-            Shader shader = Shader.makeLinearGradient(x0, y0, x1, y1, colors, fractions, gs);
-            this.skijaPaint.setShader(shader);
+            final float[] fractions = lgp.getFractions();
+            final GradientStyle gs = GradientStyle.DEFAULT.withTileMode(awtCycleMethodToSkijaFilterTileMode(lgp.getCycleMethod()));
+            this.skijaPaint.setShader(Shader.makeLinearGradient(x0, y0, x1, y1, colors, fractions, gs));
         } else if (paint instanceof RadialGradientPaint) {
-            RadialGradientPaint rgp = (RadialGradientPaint) paint;
+            final RadialGradientPaint rgp = (RadialGradientPaint) paint;
             float x = (float) rgp.getCenterPoint().getX();
             float y = (float) rgp.getCenterPoint().getY();
-            int[] colors = new int[rgp.getColors().length];
+
+            final int[] colors = new int[rgp.getColors().length];
             for (int i = 0; i < rgp.getColors().length; i++) {
                 colors[i] = rgp.getColors()[i].getRGB();
             }
-            GradientStyle gs = GradientStyle.DEFAULT.withTileMode(awtCycleMethodToSkijaFilterTileMode(rgp.getCycleMethod()));
+            final GradientStyle gs = GradientStyle.DEFAULT.withTileMode(awtCycleMethodToSkijaFilterTileMode(rgp.getCycleMethod()));
             float fx = (float) rgp.getFocusPoint().getX();
             float fy = (float) rgp.getFocusPoint().getY();
-            Shader shader;
+
+            final Shader shader;
             if (rgp.getFocusPoint().equals(rgp.getCenterPoint())) {
                 shader = Shader.makeRadialGradient(x, y, rgp.getRadius(), colors, rgp.getFractions(), gs);
             } else {
@@ -733,18 +859,18 @@ public class SkijaGraphics2D extends Graphics2D {
             }
             this.skijaPaint.setShader(shader);
         } else if (paint instanceof GradientPaint) {
-            GradientPaint gp = (GradientPaint) paint;
+            final GradientPaint gp = (GradientPaint) paint;
             float x1 = (float) gp.getPoint1().getX();
             float y1 = (float) gp.getPoint1().getY();
             float x2 = (float) gp.getPoint2().getX();
             float y2 = (float) gp.getPoint2().getY();
-            int[] colors = new int[]{gp.getColor1().getRGB(), gp.getColor2().getRGB()};
-            GradientStyle gs = GradientStyle.DEFAULT;
-            if (gp.isCyclic()) {
-                gs = GradientStyle.DEFAULT.withTileMode(FilterTileMode.MIRROR);
-            }
-            Shader shader = Shader.makeLinearGradient(x1, y1, x2, y2, colors, (float[]) null, gs);
-            this.skijaPaint.setShader(shader);
+
+            final int[] colors = new int[]{gp.getColor1().getRGB(), gp.getColor2().getRGB()};
+            final GradientStyle gs = (gp.isCyclic())
+                    ? GradientStyle.DEFAULT.withTileMode(FilterTileMode.MIRROR)
+                    : GradientStyle.DEFAULT;
+
+            this.skijaPaint.setShader(Shader.makeLinearGradient(x1, y1, x2, y2, colors, (float[]) null, gs));
         }
     }
 
@@ -769,8 +895,7 @@ public class SkijaGraphics2D extends Graphics2D {
             if (bs.equals(this.stroke)) {
                 return; // no change
             }
-            double lineWidth = bs.getLineWidth();
-            this.skijaPaint.setStrokeWidth((float) Math.max(lineWidth, MIN_LINE_WIDTH));
+            this.skijaPaint.setStrokeWidth((float) Math.max(bs.getLineWidth(), MIN_LINE_WIDTH));
             this.skijaPaint.setStrokeCap(awtToSkijaLineCap(bs.getEndCap()));
             this.skijaPaint.setStrokeJoin(awtToSkijaLineJoin(bs.getLineJoin()));
             this.skijaPaint.setStrokeMiter(bs.getMiterLimit());
@@ -929,6 +1054,13 @@ public class SkijaGraphics2D extends Graphics2D {
         return (RenderingHints) this.hints.clone();
     }
 
+    private RenderingHints getRenderingHintsInternally() {
+        if (LOG_ENABLED) {
+            LOGGER.debug("getRenderingHintsInternally()");
+        }
+        return this.hints;
+    }
+
     /**
      * Applies the translation {@code (tx, ty)}.  This call is delegated 
      * to {@link #translate(double, double)}.
@@ -1057,6 +1189,13 @@ public class SkijaGraphics2D extends Graphics2D {
         return (AffineTransform) this.transform.clone();
     }
 
+    private AffineTransform getTransformInternally() {
+        if (LOG_ENABLED) {
+            LOGGER.debug("getTransformInternally()");
+        }
+        return this.transform;
+    }
+
     /**
      * Sets the transform.
      * 
@@ -1071,8 +1210,7 @@ public class SkijaGraphics2D extends Graphics2D {
             LOGGER.debug("setTransform({})", t);
         }
         if (t == null) {
-            this.transform = new AffineTransform();
-            t = this.transform;
+            t = this.transform = new AffineTransform();
         } else {
             this.transform = new AffineTransform(t);
         }
@@ -1160,17 +1298,8 @@ public class SkijaGraphics2D extends Graphics2D {
         if (LOG_ENABLED) {
             LOGGER.debug("create()");
         }
-        SkijaGraphics2D copy = new SkijaGraphics2D(this.canvas);
-        copy.setRenderingHints(getRenderingHints());
-        copy.clip = this.clip;
-        copy.setPaint(getPaint());
-        copy.setColor(getColor());
-        copy.setComposite(getComposite());
-        copy.setStroke(getStroke());
-        copy.setFont(getFont());
-        copy.setTransform(getTransform());
-        copy.setBackground(getBackground());
-        return copy;
+        // use special copy-constructor:
+        return new SkijaGraphics2D(this);
     }
 
     @Override
@@ -1269,7 +1398,7 @@ public class SkijaGraphics2D extends Graphics2D {
      * @see #getFont()
      */
     @Override
-    public void setFont(Font font) {
+    public void setFont(final Font font) {
         if (LOG_ENABLED) {
             LOGGER.debug("setFont({})", font);
         }
@@ -1277,12 +1406,13 @@ public class SkijaGraphics2D extends Graphics2D {
             return;
         }
         this.awtFont = font;
+
         String fontName = font.getName();
         // check if there is a font name mapping to apply
         @SuppressWarnings("unchecked")
-        Function<String, String> fm = (Function<String, String>) getRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION);
+        final Function<String, String> fm = (Function<String, String>) getRenderingHint(SkijaHints.KEY_FONT_MAPPING_FUNCTION);
         if (fm != null) {
-            String mappedFontName = fm.apply(fontName);
+            final String mappedFontName = fm.apply(fontName);
             if (mappedFontName != null) {
                 if (LOG_ENABLED) {
                     LOGGER.debug("Mapped font name is {}", mappedFontName);
@@ -1290,12 +1420,16 @@ public class SkijaGraphics2D extends Graphics2D {
                 fontName = mappedFontName;
             }
         }
-        FontStyle style = awtFontStyleToSkijaFontStyle(font.getStyle());
-        TypefaceKey key = new TypefaceKey(fontName, style);
-        this.typeface = this.typefaceMap.get(key);
+        final FontStyle style = awtFontStyleToSkijaFontStyle(font.getStyle());
+        final TypefaceKey key = new TypefaceKey(fontName, style);
+
+        this.typeface = TYPEFACE_MAP.get(key);
         if (this.typeface == null) {
-            this.typeface = Typeface.makeFromName(fontName, awtFontStyleToSkijaFontStyle(font.getStyle()));
-            this.typefaceMap.put(key, this.typeface);
+            if (LOG_ENABLED) {
+                LOGGER.debug("Typeface.makeFromName({} style={})", fontName, style);
+            }
+            this.typeface = Typeface.makeFromName(fontName, style);
+            TYPEFACE_MAP.put(key, this.typeface);
         }
         this.skijaFont = new io.github.humbleui.skija.Font(this.typeface, font.getSize());
     }
@@ -1437,11 +1571,15 @@ public class SkijaGraphics2D extends Graphics2D {
             setClip(s);
             return;
         }
+        if (s == null) {
+            throw new NullPointerException("clip(Shape): null argument.");
+        }
         if (!s.intersects(getClip().getBounds2D())) {
             setClip(new Rectangle2D.Double());
         } else {
-            Area a1 = new Area(s);
-            Area a2 = new Area(getClip());
+            // note: Area class is very slow (especially for rect):
+            final Area a1 = new Area(s);
+            final Area a2 = new Area(getClip());
             a1.intersect(a2);
             setClip(new Path2D.Double(a1));
             this.canvas.clipPath(path(s));
@@ -1882,18 +2020,22 @@ public class SkijaGraphics2D extends Graphics2D {
         if (LOG_ENABLED) {
             LOGGER.debug("drawImage(Image, {}, {}, {}, {}, ImageObserver)", x, y, width, height);
         }
+        // LOGGER.info("drawImage(Image, {}, {}, {}, {}, ImageObserver)", x, y, width, height);
+
         final BufferedImage buffered;
-        if (img instanceof BufferedImage) {
+        if ((img instanceof BufferedImage) && ((BufferedImage) img).getType() == BufferedImage.TYPE_INT_ARGB) {
             buffered = (BufferedImage) img;
         } else {
-            buffered = new BufferedImage(width, height,
-                    BufferedImage.TYPE_INT_ARGB);
+            // LOGGER.info("drawImage(): copy BufferedImage");
+
+            buffered = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             final Graphics2D g2 = buffered.createGraphics();
             g2.drawImage(img, 0, 0, width, height, null);
             g2.dispose();
         }
-        io.github.humbleui.skija.Image skijaImage = convertToSkijaImage(buffered);
-        this.canvas.drawImageRect(skijaImage, new Rect(x, y, x + width, y + height));
+        try (io.github.humbleui.skija.Image skijaImage = convertToSkijaImage(buffered)) {
+            this.canvas.drawImageRect(skijaImage, new Rect(x, y, x + width, y + height));
+        }
         return true;
     }
 
@@ -2095,46 +2237,51 @@ public class SkijaGraphics2D extends Graphics2D {
      * 
      * @return A buffered image. 
      */
+    @SuppressWarnings("unchecked")
     private static BufferedImage convertRenderedImage(RenderedImage img) {
         if (img instanceof BufferedImage) {
             return (BufferedImage) img;
         }
-        ColorModel cm = img.getColorModel();
-        int width = img.getWidth();
-        int height = img.getHeight();
-        WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
-        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
-        Hashtable properties = new Hashtable();
+        final int width = img.getWidth();
+        final int height = img.getHeight();
+        final ColorModel cm = img.getColorModel();
+        final boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+
+        final WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
+
+        final Hashtable properties = new Hashtable();
         String[] keys = img.getPropertyNames();
         if (keys != null) {
             for (String key : keys) {
                 properties.put(key, img.getProperty(key));
             }
         }
-        BufferedImage result = new BufferedImage(cm, raster,
-                isAlphaPremultiplied, properties);
+        final BufferedImage result = new BufferedImage(cm, raster, isAlphaPremultiplied, properties);
         img.copyData(raster);
         return result;
     }
 
-    private static io.github.humbleui.skija.Image convertToSkijaImage(Image image) {
-        int w = image.getWidth(null);
-        int h = image.getHeight(null);
-        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        g2.drawImage(image, 0, 0, null);
-        DataBufferInt db = (DataBufferInt) img.getRaster().getDataBuffer();
-        int[] pixels = db.getData();
-        byte[] bytes = new byte[pixels.length * 4];
+    private static io.github.humbleui.skija.Image convertToSkijaImage(final BufferedImage image) {
+        // TODO: monitor performance:
+        final int w = image.getWidth();
+        final int h = image.getHeight();
+
+        final DataBufferInt db = (DataBufferInt) image.getRaster().getDataBuffer();
+        final int[] pixels = db.getData();
+
+        final byte[] bytes = new byte[pixels.length * 4]; // Big alloc!
+
         for (int i = 0; i < pixels.length; i++) {
-            int p = pixels[i];
+            final int p = pixels[i];
             bytes[i * 4 + 3] = (byte) ((p & 0xFF000000) >> 24);
             bytes[i * 4 + 2] = (byte) ((p & 0xFF0000) >> 16);
             bytes[i * 4 + 1] = (byte) ((p & 0xFF00) >> 8);
             bytes[i * 4] = (byte) (p & 0xFF);
         }
-        ImageInfo imageInfo = new ImageInfo(w, h, ColorType.BGRA_8888, ColorAlphaType.PREMUL);
-        return io.github.humbleui.skija.Image.makeRaster(imageInfo, bytes, image.getWidth(null) * 4L);
+        final ImageInfo imageInfo = new ImageInfo(w, h, ColorType.BGRA_8888, ColorAlphaType.UNPREMUL);
+
+        // LOGGER.info("convertToSkijaImage(): {}", imageInfo);
+        return io.github.humbleui.skija.Image.makeRaster(imageInfo, bytes, 4L * w);
     }
 
 }

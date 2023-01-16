@@ -45,7 +45,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -63,7 +62,7 @@ public class SkijaGraphics2DTest {
     private static final boolean TEST_REFERENCE_IMPLEMENTATION = false;
 
     private Graphics2D g2;
-    
+
     @BeforeEach
     public void setUp() {
         if (TEST_REFERENCE_IMPLEMENTATION) {
@@ -76,7 +75,7 @@ public class SkijaGraphics2DTest {
             this.g2 = new SkijaGraphics2D(10, 20);
         }
     }
-    
+
     /**
      * Checks that the default transform is an identity transform.
      */
@@ -84,7 +83,7 @@ public class SkijaGraphics2DTest {
     public void checkDefaultTransform() {
         assertEquals(new AffineTransform(), g2.getTransform());
     }
-    
+
     /**
      * Modifying the transform returned by the Graphics2D should not affect
      * the state of the Graphics2D.  In order for that to happen, the method
@@ -97,7 +96,7 @@ public class SkijaGraphics2DTest {
         assertNotEquals(t, g2.getTransform());
         assertEquals(new AffineTransform(), g2.getTransform());
     }
-    
+
     /**
      * A basic check that setTransform() does indeed update the transform.
      */
@@ -106,17 +105,17 @@ public class SkijaGraphics2DTest {
         AffineTransform t = new AffineTransform(1, 2, 3, 4, 5, 6);
         g2.setTransform(t);
         assertEquals(t, g2.getTransform());
-  
+
         t.setTransform(6, 5, 4, 3, 2, 1);
         g2.setTransform(t);
         assertEquals(t, g2.getTransform());
-        
+
         // in spite of the docs saying that null is accepted this gives
         // a NullPointerException with SunGraphics2D.
         //g2.setTransform(null);
         //assertEquals(new AffineTransform(), g2.getTransform());
     }
-    
+
     /**
      * When calling setTransform() the caller passes in an AffineTransform 
      * instance.  If the caller retains a reference to the AffineTransform 
@@ -132,21 +131,21 @@ public class SkijaGraphics2DTest {
         t.setToRotation(Math.PI);
         assertNotEquals(t, g2.getTransform());
     }
-    
+
     @Test
     public void checkSetNonInvertibleTransform() {
         AffineTransform t = AffineTransform.getScaleInstance(0.0, 0.0);
         g2.setTransform(t);
         assertEquals(t, g2.getTransform());
-        
+
         // after setting the clip, we cannot retrieve it while the transform
         // is non-invertible...
         Rectangle2D clip = new Rectangle2D.Double(1, 2, 3, 4);
         g2.setClip(clip);
         assertNull(g2.getClip());
-        
+
         g2.setTransform(new AffineTransform());
-        assertEquals(new Rectangle2D.Double(0, 0, 0, 0), 
+        assertEquals(new Rectangle2D.Double(0, 0, 0, 0),
                 g2.getClip().getBounds2D());
     }
 
@@ -159,7 +158,7 @@ public class SkijaGraphics2DTest {
         AffineTransform t = new AffineTransform();
         this.g2.setTransform(t);
         this.g2.translate(30, 30);
-        AffineTransform rt = AffineTransform.getRotateInstance(Math.PI / 2.0, 
+        AffineTransform rt = AffineTransform.getRotateInstance(Math.PI / 2.0,
                 300, 200);
         this.g2.transform(rt);
         t = this.g2.getTransform();
@@ -170,7 +169,7 @@ public class SkijaGraphics2DTest {
         assertEquals(530.0, t.getTranslateX(), EPSILON);
         assertEquals(-70, t.getTranslateY(), EPSILON);
     }
-    
+
     @Test
     public void checkTransformNull() {
         try {
@@ -180,20 +179,20 @@ public class SkijaGraphics2DTest {
             // this exception is expected
         }
     }
-    
+
     /**
      * Basic checks for the scale(x, y) method.
      */
     @Test
     public void scale() {
         g2.scale(0.5, 2.0);
-        assertEquals(AffineTransform.getScaleInstance(0.5, 2.0), 
+        assertEquals(AffineTransform.getScaleInstance(0.5, 2.0),
                 g2.getTransform());
         g2.scale(2.0, -1.0);
-        assertEquals(AffineTransform.getScaleInstance(1.0, -2.0), 
-                g2.getTransform());    
+        assertEquals(AffineTransform.getScaleInstance(1.0, -2.0),
+                g2.getTransform());
     }
-    
+
     /**
      * Checks that a call to scale(x, y) on top of an existing translation
      * gives the correct values.
@@ -201,33 +200,33 @@ public class SkijaGraphics2DTest {
     @Test
     public void translateFollowedByScale() {
         g2.translate(2, 3);
-        assertEquals(AffineTransform.getTranslateInstance(2.0, 3.0), 
+        assertEquals(AffineTransform.getTranslateInstance(2.0, 3.0),
                 g2.getTransform());
         g2.scale(10, 20);
         assertEquals(new AffineTransform(10.0, 0.0, 0.0, 20.0, 2.0, 3.0),
                 g2.getTransform());
     }
-    
+
     /**
      * Checks that a call to translate(x, y) on top of an existing scale
      * gives the correct values.
-     */    
+     */
     @Test
     public void scaleFollowedByTranslate() {
         g2.scale(2, 2);
-        assertEquals(AffineTransform.getScaleInstance(2.0, 2.0), 
+        assertEquals(AffineTransform.getScaleInstance(2.0, 2.0),
                 g2.getTransform());
         g2.translate(10, 20);
         assertEquals(new AffineTransform(2.0, 0.0, 0.0, 2.0, 20.0, 40.0),
                 g2.getTransform());
     }
-    
+
     private static final double EPSILON = 0.000000001;
-    
+
     @Test
     public void scaleFollowedByRotate() {
         g2.scale(2, 2);
-        assertEquals(AffineTransform.getScaleInstance(2.0, 2.0), 
+        assertEquals(AffineTransform.getScaleInstance(2.0, 2.0),
                 g2.getTransform());
         g2.rotate(Math.PI / 3);
         AffineTransform t = g2.getTransform();
@@ -238,17 +237,17 @@ public class SkijaGraphics2DTest {
         assertEquals(0.0, t.getTranslateX(), EPSILON);
         assertEquals(0.0, t.getTranslateY(), EPSILON);
     }
-    
+
     @Test
     public void rotateFollowedByScale() {
         g2.rotate(Math.PI);
-        assertEquals(AffineTransform.getRotateInstance(Math.PI), 
+        assertEquals(AffineTransform.getRotateInstance(Math.PI),
                 g2.getTransform());
         g2.scale(2.0, 2.0);
         assertEquals(new AffineTransform(-2.0, 0.0, 0.0, -2.0, 0.0, 0.0),
                 g2.getTransform());
     }
-    
+
     /**
      * Checks that the getClip() method returns a different object than what
      * was passed to setClip(), and that multiple calls to getClip() return
@@ -263,7 +262,7 @@ public class SkijaGraphics2DTest {
         Shape s2 = this.g2.getClip();
         assertNotSame(s, s2);
     }
-    
+
     /**
      * The default user clip should be {@code null}.
      */
@@ -271,7 +270,7 @@ public class SkijaGraphics2DTest {
     public void checkDefaultClip() {
         assertNull(g2.getClip(), "Default user clip should be null.");
     }
-    
+
     /**
      * Checks that getClipBounds() is returning an integer approximation of
      * the bounds.
@@ -280,7 +279,7 @@ public class SkijaGraphics2DTest {
     public void checkGetClipBounds() {
         Rectangle2D r = new Rectangle2D.Double(0.25, 0.25, 0.5, 0.5);
         this.g2.setClip(r);
-        assertEquals(new Rectangle(0, 0, 1, 1), this.g2.getClipBounds());       
+        assertEquals(new Rectangle(0, 0, 1, 1), this.g2.getClipBounds());
     }
 
     /**
@@ -302,7 +301,7 @@ public class SkijaGraphics2DTest {
         Rectangle2D r = new Rectangle2D.Double(1.0, 1.0, 3.0, 3.0);
         this.g2.setClip(r);
         this.g2.clip(new Rectangle2D.Double(0.0, 0.0, 2.0, 2.0));
-        assertEquals(new Rectangle2D.Double(1.0, 1.0, 1.0, 1.0), 
+        assertEquals(new Rectangle2D.Double(1.0, 1.0, 1.0, 1.0),
                 this.g2.getClip().getBounds2D());
     }
 
@@ -328,17 +327,17 @@ public class SkijaGraphics2DTest {
         this.g2.setClip(r);
         assertEquals(r, this.g2.getClip().getBounds2D());
         this.g2.scale(0.5, 2.0);
-        assertEquals(new Rectangle2D.Double(2, 1, 6, 0.25), 
+        assertEquals(new Rectangle2D.Double(2, 1, 6, 0.25),
                 this.g2.getClip().getBounds2D());
 
         // check that we get a good intersection when clipping after the
         // scaling has been done...
         r = new Rectangle2D.Double(3, 0, 2, 2);
         this.g2.clip(r);
-        assertEquals(new Rectangle2D.Double(3, 1, 2, 0.25), 
+        assertEquals(new Rectangle2D.Double(3, 1, 2, 0.25),
                 this.g2.getClip().getBounds2D());
     }
-    
+
     /** 
      * Translating will change the existing clip.
      */
@@ -348,10 +347,10 @@ public class SkijaGraphics2DTest {
         this.g2.setClip(clip);
         assertEquals(clip, this.g2.getClip().getBounds2D());
         this.g2.translate(1.0, 2.0);
-        assertEquals(new Rectangle(-1, -2, 1 ,1), 
+        assertEquals(new Rectangle(-1, -2, 1, 1),
                 this.g2.getClip().getBounds2D());
     }
-    
+
     @Test
     public void checkSetClipAfterTranslate() {
         this.g2.translate(1.0, 2.0);
@@ -360,7 +359,7 @@ public class SkijaGraphics2DTest {
         this.g2.translate(1.0, 2.0);
         assertEquals(new Rectangle(-1, -2, 1, 1), this.g2.getClip().getBounds());
     }
-    
+
     /**
      * Transforming will change the reported clipping shape.
      */
@@ -369,15 +368,15 @@ public class SkijaGraphics2DTest {
         Rectangle2D clip = new Rectangle2D.Double(0, 0, 1, 1);
         this.g2.setClip(clip);
         assertEquals(clip, this.g2.getClip().getBounds2D());
-        
+
         this.g2.transform(AffineTransform.getRotateInstance(Math.PI));
-        assertEquals(new Rectangle(-1, -1, 1 ,1), 
+        assertEquals(new Rectangle(-1, -1, 1, 1),
                 this.g2.getClip().getBounds2D());
-        
+
         this.g2.setTransform(new AffineTransform());
-        assertEquals(clip, this.g2.getClip().getBounds2D());     
+        assertEquals(clip, this.g2.getClip().getBounds2D());
     }
-    
+
     /**
      * Clipping with a line makes no sense, but the API allows it so we should
      * not fail.  In fact, running with a JDK Graphics2D (from a BufferedImage)
@@ -394,7 +393,7 @@ public class SkijaGraphics2DTest {
         //        this.g2.getClip().getBounds2D());
         //assertTrue(this.g2.getClip().getBounds2D().isEmpty());        
     }
-    
+
     /**
      * Clipping with a null argument is "not recommended" according to the
      * latest API docs (https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6206189).
@@ -423,25 +422,25 @@ public class SkijaGraphics2DTest {
     public void checkClipRect() {
         Rectangle2D clip = new Rectangle2D.Double(0, 0, 5, 5);
         this.g2.setClip(clip);
-        
+
         this.g2.clipRect(2, 1, 4, 2);
-        assertEquals(new Rectangle(2, 1, 3, 2), 
+        assertEquals(new Rectangle(2, 1, 3, 2),
                 g2.getClip().getBounds2D());
     }
-    
+
     @Test
     public void checkClipRectParams() {
         Rectangle2D clip = new Rectangle2D.Double(0, 0, 5, 5);
         this.g2.setClip(clip);
-        
+
         // negative width
         this.g2.clipRect(2, 1, -4, 2);
         assertTrue(this.g2.getClip().getBounds2D().isEmpty());
-        
+
         // negative height
         this.g2.setClip(clip);
         this.g2.clipRect(2, 1, 4, -2);
-        assertTrue(this.g2.getClip().getBounds2D().isEmpty());    
+        assertTrue(this.g2.getClip().getBounds2D().isEmpty());
     }
 
     @Test
@@ -459,7 +458,7 @@ public class SkijaGraphics2DTest {
             // this exception is expected
         }
     }
-    
+
     @Test
     public void checkDrawStringWithEmptyString() {
         // this should not cause any exception 
@@ -469,21 +468,21 @@ public class SkijaGraphics2DTest {
     /**
      * Some checks for the create() method.
      */
-    @Test 
+    @Test
     public void checkCreate() {
         this.g2.setClip(new Rectangle(1, 2, 3, 4));
         Graphics2D copy = (Graphics2D) g2.create();
         assertEquals(copy.getBackground(), g2.getBackground());
-        assertEquals(copy.getClip().getBounds2D(), 
+        assertEquals(copy.getClip().getBounds2D(),
                 g2.getClip().getBounds2D());
         assertEquals(copy.getColor(), g2.getColor());
         assertEquals(copy.getComposite(), g2.getComposite());
         assertEquals(copy.getFont(), g2.getFont());
-        assertEquals(copy.getRenderingHints(), g2.getRenderingHints());        
-        assertEquals(copy.getStroke(), g2.getStroke()); 
-        assertEquals(copy.getTransform(), g2.getTransform()); 
+        assertEquals(copy.getRenderingHints(), g2.getRenderingHints());
+        assertEquals(copy.getStroke(), g2.getStroke());
+        assertEquals(copy.getTransform(), g2.getTransform());
     }
-    
+
     /**
      * The setPaint() method allows a very minor state leakage in the sense 
      * that it is possible to modify a GradientPaint externally after a call
@@ -503,7 +502,7 @@ public class SkijaGraphics2DTest {
         pt1.setLocation(7.0, 7.0);
         assertEquals(gp, this.g2.getPaint());
     }
-    
+
     /**
      * According to the Javadocs, setting the paint to null should have no 
      * impact on the current paint (that is, the call is silently ignored).
@@ -515,7 +514,7 @@ public class SkijaGraphics2DTest {
         this.g2.setPaint(null);
         assertEquals(Color.RED, this.g2.getPaint());
     }
-    
+
     /**
      * Passing a Color to setPaint() also updates the color, but not the
      * background color.
@@ -528,7 +527,7 @@ public class SkijaGraphics2DTest {
         assertEquals(Color.MAGENTA, this.g2.getColor());
         assertEquals(existingBackground, this.g2.getBackground());
     }
-    
+
     /**
      * If setPaint() is called with an argument that is not an instance of
      * Color, then the existing color remains unchanged.
@@ -555,7 +554,7 @@ public class SkijaGraphics2DTest {
         assertEquals(Color.MAGENTA, this.g2.getPaint());
         assertEquals(Color.MAGENTA, this.g2.getColor());
     }
-    
+
     /**
      * The behaviour of the reference implementation has been observed as
      * ignoring null.  This matches the documented behaviour of the
@@ -567,7 +566,7 @@ public class SkijaGraphics2DTest {
         this.g2.setColor(null);
         assertEquals(Color.RED, this.g2.getColor());
     }
-    
+
     /**
      * Setting the background color does not change the color or paint.
      */
@@ -589,7 +588,7 @@ public class SkijaGraphics2DTest {
         this.g2.setBackground(null);
         assertNull(this.g2.getBackground());
     }
-    
+
     /**
      * Since the setBackground() method is allowing null, we should ensure
      * that the clearRect() method doesn't fail in this case.  With no
@@ -616,7 +615,7 @@ public class SkijaGraphics2DTest {
             // this exception is expected in the test   
         }
     }
-    
+
     @Test
     public void checkSetStrokeNull() {
         try {
@@ -626,18 +625,18 @@ public class SkijaGraphics2DTest {
             // this exception is expected in the test   
         }
     }
-    
+
     /**
      * Basic check of set then get.
      */
     @Test
     public void checkSetRenderingHint() {
-        this.g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, 
+        this.g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                 RenderingHints.VALUE_STROKE_PURE);
-        assertEquals(RenderingHints.VALUE_STROKE_PURE, 
+        assertEquals(RenderingHints.VALUE_STROKE_PURE,
                 this.g2.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL));
     }
-    
+
     /**
      * The reference implementation has been observed to throw a 
      * NullPointerException when the key is null.
@@ -651,7 +650,7 @@ public class SkijaGraphics2DTest {
             // this is expected
         }
     }
-    
+
     /**
      * The reference implementation has been observed to accept a null key 
      * and return null in that case.
@@ -660,36 +659,36 @@ public class SkijaGraphics2DTest {
     public void checkGetRenderingHintWithNullKey() {
         assertNull(this.g2.getRenderingHint(null));
     }
-    
+
     /**
      * Check setting a hint with a value that doesn't match the key.
      */
     @Test
     public void checkSetRenderingHintWithInconsistentValue() {
         try {
-            this.g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, 
+            this.g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                     RenderingHints.VALUE_ANTIALIAS_DEFAULT);
             fail("Expected an IllegalArgumentException.");
         } catch (IllegalArgumentException e) {
             // we expect this exception
         }
     }
-    
+
     /**
      * A call to getRenderingHints() is returning a copy of the hints, so 
      * changing it will not affect the state of the Graphics2D instance.
      */
     @Test
     public void checkGetRenderingHintsSafety() {
-        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+        this.g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_OFF);
         RenderingHints hints = this.g2.getRenderingHints();
-        hints.put(RenderingHints.KEY_ANTIALIASING, 
+        hints.put(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
-        assertEquals(RenderingHints.VALUE_ANTIALIAS_OFF, 
-                this.g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING));   
+        assertEquals(RenderingHints.VALUE_ANTIALIAS_OFF,
+                this.g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
     }
-    
+
     @Test
     public void checkSetRenderingHintsNull() {
         try {
@@ -699,7 +698,7 @@ public class SkijaGraphics2DTest {
             // this is expected
         }
     }
-    
+
     @Test
     public void checkHit() {
         Shape shape = new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0);
@@ -708,7 +707,7 @@ public class SkijaGraphics2DTest {
         this.g2.scale(3.0, 3.0);
         assertTrue(this.g2.hit(r, shape, false));
     }
-    
+
     @Test
     public void checkHitForOutline() {
         Shape shape = new Rectangle2D.Double(0.0, 0.0, 3.0, 3.0);
@@ -718,8 +717,8 @@ public class SkijaGraphics2DTest {
         // now the rectangle is entirely inside the shape, but does not touch
         // the outline...
         assertTrue(this.g2.hit(r, shape, true));
-    } 
-    
+    }
+
     /**
      * We have observed in the reference implementation that setting the font
      * to null does not change the current font setting.
@@ -732,7 +731,7 @@ public class SkijaGraphics2DTest {
         this.g2.setFont(null);
         assertEquals(f, this.g2.getFont());
     }
-    
+
     @Test
     public void checkDefaultStroke() {
         BasicStroke s = (BasicStroke) this.g2.getStroke();
@@ -740,7 +739,7 @@ public class SkijaGraphics2DTest {
         assertEquals(1.0f, s.getLineWidth(), EPSILON);
         assertEquals(BasicStroke.JOIN_MITER, s.getLineJoin());
     }
-    
+
     /**
      * Check that a null GlyphVector throws a {@code NullPointerException}.
      */
@@ -753,7 +752,7 @@ public class SkijaGraphics2DTest {
             // expected
         }
     }
-    
+
     /**
      * Check the shear() method.
      */
@@ -763,7 +762,7 @@ public class SkijaGraphics2DTest {
         g2.shear(2.0, 3.0);
         assertEquals(new AffineTransform(1, 3, 2, 1, 0, 0), g2.getTransform());
     }
-    
+
     /**
      * Checks a translate() followed by a shear().
      */
@@ -774,14 +773,14 @@ public class SkijaGraphics2DTest {
         g2.shear(2.0, 3.0);
         assertEquals(new AffineTransform(1, 3, 2, 1, 10, 20), g2.getTransform());
     }
-    
+
     @Test
     public void drawImageWithNullBackground() {
         Image img = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
         g2.drawImage(img, 10, 10, null, null);
         assertTrue(true); // won't get here if there's an exception above
     }
-    
+
     /**
      * https://github.com/jfree/jfreesvg/issues/6
      */
@@ -791,7 +790,7 @@ public class SkijaGraphics2DTest {
         g2.drawImage(img, null, null);
         assertTrue(true); // won't get here if there's an exception above
     }
-    
+
     @Test
     public void drawImageWithNullImage() {
         // API docs say method does nothing if img is null
@@ -803,12 +802,12 @@ public class SkijaGraphics2DTest {
         assertTrue(g2.drawImage(null, 1, 2, 3, 4, 5, 6, 7, 8, null));
         assertTrue(g2.drawImage(null, 1, 2, 3, 4, 5, 6, 7, 8, Color.RED, null));
     }
-    
+
     @Test
     public void drawImageWithNegativeDimensions() {
         Image img = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
         assertTrue(g2.drawImage(img, 1, 2, -10, 10, null));
-        assertTrue(g2.drawImage(img, 1, 2, 10, -10, null)); 
+        assertTrue(g2.drawImage(img, 1, 2, 10, -10, null));
     }
 
     /**
@@ -868,25 +867,25 @@ public class SkijaGraphics2DTest {
         FontMetrics fm = this.g2.getFontMetrics(f);
         int w = fm.stringWidth("ABC");
         Rectangle2D bounds = fm.getStringBounds("ABC", this.g2);
-        
+
         // after scaling, the string width is not changed
         this.g2.setTransform(AffineTransform.getScaleInstance(3.0, 2.0));
         fm = this.g2.getFontMetrics(f);
         assertEquals(w, fm.stringWidth("ABC"));
         assertEquals(bounds.getWidth(), fm.getStringBounds("ABC", this.g2).getWidth(), EPSILON);
     }
-    
+
     @Test
     public void drawImageWithNullImageOp() {
         BufferedImage img = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
         g2.drawImage(img, null, 2, 3);
         assertTrue(true); // won't get here if there's an exception above        
     }
-    
+
     /**
      * API docs say the method does nothing when called with a null image.
      */
-    @Test 
+    @Test
     public void drawRenderedImageWithNullImage() {
         g2.drawRenderedImage(null, AffineTransform.getTranslateInstance(0, 0));
         assertTrue(true); // won't get here if there's an exception above                

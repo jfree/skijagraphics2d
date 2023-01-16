@@ -35,7 +35,7 @@
 
 package org.jfree.skija;
 
-import java.awt.*;
+import java.awt.RenderingHints;
 import java.util.function.Function;
 
 /**
