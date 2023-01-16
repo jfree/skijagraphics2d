@@ -35,16 +35,17 @@
 
 package org.jfree.skija;
 
-import java.awt.*;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 
 /**
  * A graphics device for SkijaGraphics2D.
  */
-public class SkijaGraphicsDevice extends GraphicsDevice {
+public final class SkijaGraphicsDevice extends GraphicsDevice {
 
     private final String id;
 
-    GraphicsConfiguration defaultConfig;
+    private final GraphicsConfiguration defaultConfig;
 
     /**
      * Creates a new instance.

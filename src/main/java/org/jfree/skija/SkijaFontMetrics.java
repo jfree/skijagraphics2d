@@ -36,23 +36,24 @@
 package org.jfree.skija;
 
 import io.github.humbleui.skija.FontMetrics;
+import java.awt.Font;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.awt.*;
 
 /**
  * Returns font metrics.
  */
-public class SkijaFontMetrics extends java.awt.FontMetrics {
+public final class SkijaFontMetrics extends java.awt.FontMetrics {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SkijaFontMetrics.class);
 
     /** Skija font. */
-    private io.github.humbleui.skija.Font skijaFont;
+    private final transient io.github.humbleui.skija.Font skijaFont;
 
     /** Skija font metrics. */
-    private FontMetrics metrics;
+    private final transient FontMetrics metrics;
 
     /**
      * Creates a new instance.

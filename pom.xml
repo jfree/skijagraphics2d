@@ -5,6 +5,7 @@
     <artifactId>org.jfree.skijagraphics2d</artifactId>
     <version>1.0.5-SNAPSHOT</version>
     <packaging>jar</packaging>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
@@ -144,7 +145,7 @@
         <dependency>
             <groupId>io.github.humbleui</groupId>
             <artifactId>skija-${skija.platform}</artifactId>
-            <version>0.98.1</version>
+            <version>0.109.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -193,7 +194,7 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <compilerArgument>-Xlint:unchecked</compilerArgument>
-                    <encoding>${project.build.sourceEncoding}</encoding>               
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -239,6 +240,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>
