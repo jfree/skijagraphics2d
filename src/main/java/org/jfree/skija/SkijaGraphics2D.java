@@ -371,10 +371,6 @@ public final class SkijaGraphics2D extends Graphics2D {
         }
     }
 
-    public boolean isCompatibleCanvas(final Canvas canvas) {
-        return this.canvas == canvas;
-    }
-
     private Canvas getCanvas() {
         return this.canvas;
     }
