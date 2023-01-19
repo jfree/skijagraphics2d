@@ -114,6 +114,9 @@ import org.slf4j.LoggerFactory;
  */
 public final class SkijaGraphics2D extends Graphics2D {
 
+    /** SkijaGraphics2D version */
+    public static final String VERSION = Version.getVersion();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SkijaGraphics2D.class);
 
     /** The line width to use when a BasicStroke with line width = 0.0 is applied. */
@@ -708,22 +711,20 @@ public final class SkijaGraphics2D extends Graphics2D {
      * @return A boolean. 
      */
     @Override
-    public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
+    public boolean hit(final Rectangle rect, final Shape s, final boolean onStroke) {
         if (LOG_ENABLED) {
             LOGGER.debug("hit(Rectangle, Shape, boolean)");
         }
-        Shape ts;
+        final Shape ts;
         if (onStroke) {
-            ts = this.transform.createTransformedShape(
-                    this.stroke.createStrokedShape(s));
+            ts = _createTransformedShape(this.stroke.createStrokedShape(s), false);
         } else {
-            ts = this.transform.createTransformedShape(s);
+            ts = _createTransformedShape(s, false);
         }
         if (!rect.getBounds2D().intersects(ts.getBounds2D())) {
             return false;
         }
         // note: Area class is very slow (especially for rect):
-        // TODO: Faster to test ts.getBounds2D() overlaps rect:
         final Area a1 = new Area(rect);
         final Area a2 = new Area(ts);
         a1.intersect(a2);
@@ -895,8 +896,16 @@ public final class SkijaGraphics2D extends Graphics2D {
             this.skijaPaint.setStrokeCap(awtToSkijaLineCap(bs.getEndCap()));
             this.skijaPaint.setStrokeJoin(awtToSkijaLineJoin(bs.getLineJoin()));
             this.skijaPaint.setStrokeMiter(bs.getMiterLimit());
-            if (bs.getDashArray() != null) {
-                this.skijaPaint.setPathEffect(PathEffect.makeDash(bs.getDashArray(), bs.getDashPhase()));
+            
+            final float[] dashes = bs.getDashArray();
+            if (dashes != null) {
+                try {
+                    this.skijaPaint.setPathEffect(PathEffect.makeDash(dashes, bs.getDashPhase()));
+                } catch (RuntimeException re) {
+                    System.err.println("Unable to create skija paint for dashes: "+Arrays.toString(dashes));
+                    re.printStackTrace(System.err);
+                    this.skijaPaint.setPathEffect(null);
+                }
             } else {
                 this.skijaPaint.setPathEffect(null);
             }
@@ -1206,7 +1215,7 @@ public final class SkijaGraphics2D extends Graphics2D {
             LOGGER.debug("setTransform({})", t);
         }
         if (t == null) {
-            t = this.transform = new AffineTransform();
+            this.transform = t = new AffineTransform();
         } else {
             this.transform = new AffineTransform(t);
         }
@@ -1454,7 +1463,7 @@ public final class SkijaGraphics2D extends Graphics2D {
         if (this.clip == null) {
             return null;
         }
-        return getClip().getBounds();
+        return getClipInternally().getBounds();
     }
 
     /**
@@ -1473,38 +1482,14 @@ public final class SkijaGraphics2D extends Graphics2D {
         if (this.clip == null) {
             return null;
         }
-        try {
-            AffineTransform inv = this.transform.createInverse();
-            return inv.createTransformedShape(this.clip);
-        } catch (NoninvertibleTransformException ex) {
-            return null;
-        }
+        return _inverseTransform(this.clip, true);
     }
 
-    /**
-     * Sets the user clipping region.
-     * 
-     * @param shape  the new user clipping region ({@code null} permitted).
-     * 
-     * @see #getClip()
-     */
-    @Override
-    public void setClip(Shape shape) {
-        if (LOG_ENABLED) {
-            LOGGER.debug("setClip({})", shape);
+    private Shape getClipInternally() {
+        if (this.clip == null) {
+            return null;
         }
-        // null is handled fine here...
-        // a new clip is being set, so first restore the original clip (and save
-        // it again for future restores)
-        this.canvas.restoreToCount(this.restoreCount);
-        this.restoreCount = this.canvas.save();
-        // restoring the clip might also reset the transform, so reapply it
-        setTransform(getTransform());
-        this.clip = this.transform.createTransformedShape(shape);
-        // now apply on the Skija canvas
-        if (shape != null) {
-            this.canvas.clipPath(path(shape));
-        }
+        return _inverseTransform(this.clip, false);
     }
 
     /**
@@ -1543,6 +1528,36 @@ public final class SkijaGraphics2D extends Graphics2D {
     }
 
     /**
+     * Sets the user clipping region.
+     * 
+     * @param shape  the new user clipping region ({@code null} permitted).
+     * 
+     * @see #getClip()
+     */
+    @Override
+    public void setClip(final Shape shape) {
+        setClip(shape, true);
+    }
+        
+    private void setClip(final Shape shape, final boolean clone) {
+        if (LOG_ENABLED) {
+            LOGGER.debug("setClip({})", shape);
+        }
+        // a new clip is being set, so first restore the original clip (and save
+        // it again for future restores)
+        this.canvas.restoreToCount(this.restoreCount);
+        this.restoreCount = this.canvas.save();
+        // restoring the clip might also reset the transform, so reapply it
+        setTransform(getTransform());
+        // null is handled fine here...
+        this.clip = _createTransformedShape(shape, clone); // device space
+        // now apply on the Skija canvas
+        if (shape != null) {
+            this.canvas.clipPath(path(shape));
+        }
+    }
+
+    /**
      * Clips to the intersection of the current clipping region and the
      * specified shape. 
      * 
@@ -1570,16 +1585,18 @@ public final class SkijaGraphics2D extends Graphics2D {
         if (s == null) {
             throw new NullPointerException("clip(Shape): null argument.");
         }
-        if (!s.intersects(getClip().getBounds2D())) {
-            setClip(new Rectangle2D.Double());
+        final Shape clipUser = getClipInternally();
+        final Shape clipNew;
+        if (!s.intersects(clipUser.getBounds2D())) {
+            clipNew = new Rectangle2D.Double();
         } else {
-            // note: Area class is very slow (especially for rect):
+            // note: Area class is very slow (especially for rectangles)
             final Area a1 = new Area(s);
-            final Area a2 = new Area(getClip());
+            final Area a2 = new Area(clipUser);
             a1.intersect(a2);
-            setClip(new Path2D.Double(a1));
-            this.canvas.clipPath(path(s));
+            clipNew = new Path2D.Double(a1);
         }
+        setClip(clipNew, false); // in user space
     }
 
     /**
@@ -2029,7 +2046,7 @@ public final class SkijaGraphics2D extends Graphics2D {
             g2.drawImage(img, 0, 0, width, height, null);
             g2.dispose();
         }
-        try (io.github.humbleui.skija.Image skijaImage = convertToSkijaImage(buffered)) {
+        try ( io.github.humbleui.skija.Image skijaImage = convertToSkijaImage(buffered)) {
             this.canvas.drawImageRect(skijaImage, new Rect(x, y, x + width, y + height));
         }
         return true;
@@ -2280,4 +2297,35 @@ public final class SkijaGraphics2D extends Graphics2D {
         return io.github.humbleui.skija.Image.makeRaster(imageInfo, bytes, 4L * w);
     }
 
+    private Shape _createTransformedShape(final Shape s, final boolean clone) {
+        if (this.transform.isIdentity()) {
+            return (clone) ? _clone(s) : s;
+        }
+        return this.transform.createTransformedShape(s);
+    }
+
+    private Shape _inverseTransform(final Shape s, final boolean clone) {
+        if (this.transform.isIdentity()) {
+            return (clone) ? _clone(s) : s;
+        }
+        try {
+            final AffineTransform inv = this.transform.createInverse();
+            return inv.createTransformedShape(s);
+        } catch (NoninvertibleTransformException nite) {
+            // System.err.println("NoninvertibleTransformException: " + this.transform);
+            return null;
+        }
+    }
+    
+    private Shape _clone(final Shape s) {
+        if (s == null) {
+            return null;
+        }
+        if (s instanceof Rectangle2D) {
+            final Rectangle2D r = new Rectangle2D.Double();
+            r.setRect((Rectangle2D)s);
+            return r;
+        }
+        return new Path2D.Double(s, null);
+    }
 }

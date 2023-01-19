@@ -1,0 +1,6 @@
+Built-By: org.jfree
+Built-Date: ${timestamp}
+Implementation-Title: ${project.artifactId}
+Implementation-Version: ${project.version}
+Implementation-Vendor: org.jfree
+Implementation-URL: http://github.com/jfree/skijagraphics2d
