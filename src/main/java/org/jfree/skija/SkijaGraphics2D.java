@@ -457,16 +457,16 @@ public final class SkijaGraphics2D extends Graphics2D {
         }
         this.skijaPaint.setMode(PaintMode.STROKE);
         if (s instanceof Line2D) {
-            Line2D l = (Line2D) s;
+            final Line2D l = (Line2D) s;
             this.canvas.drawLine((float) l.getX1(), (float) l.getY1(), (float) l.getX2(), (float) l.getY2(), this.skijaPaint);
         } else if (s instanceof Rectangle2D) {
-            Rectangle2D r = (Rectangle2D) s;
-            if (r.getWidth() <= 0.0 || r.getHeight() <= 0.0) {
+            final Rectangle2D r = (Rectangle2D) s;
+            if (r.getWidth() < 0.0 || r.getHeight() < 0.0) {
                 return;
             }
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
         } else if (s instanceof Ellipse2D) {
-            Ellipse2D e = (Ellipse2D) s;
+            final Ellipse2D e = (Ellipse2D) s;
             this.canvas.drawOval(Rect.makeXYWH((float) e.getMinX(), (float) e.getMinY(), (float) e.getWidth(), (float) e.getHeight()), this.skijaPaint);
         } else {
             try (final Path p = path(s)) {
@@ -491,13 +491,16 @@ public final class SkijaGraphics2D extends Graphics2D {
         }
         this.skijaPaint.setMode(PaintMode.FILL);
         if (s instanceof Rectangle2D) {
-            Rectangle2D r = (Rectangle2D) s;
+            final Rectangle2D r = (Rectangle2D) s;
             if (r.getWidth() <= 0.0 || r.getHeight() <= 0.0) {
                 return;
             }
             this.canvas.drawRect(Rect.makeXYWH((float) r.getX(), (float) r.getY(), (float) r.getWidth(), (float) r.getHeight()), this.skijaPaint);
         } else if (s instanceof Ellipse2D) {
-            Ellipse2D e = (Ellipse2D) s;
+            final Ellipse2D e = (Ellipse2D) s;
+            if (e.getWidth() <= 0.0 || e.getHeight() <= 0.0) {
+                return;
+            }
             this.canvas.drawOval(Rect.makeXYWH((float) e.getMinX(), (float) e.getMinY(), (float) e.getWidth(), (float) e.getHeight()), this.skijaPaint);
         } else if (s instanceof Path2D) {
             final Path2D p2d = (Path2D) s;
@@ -896,13 +899,13 @@ public final class SkijaGraphics2D extends Graphics2D {
             this.skijaPaint.setStrokeCap(awtToSkijaLineCap(bs.getEndCap()));
             this.skijaPaint.setStrokeJoin(awtToSkijaLineJoin(bs.getLineJoin()));
             this.skijaPaint.setStrokeMiter(bs.getMiterLimit());
-            
+
             final float[] dashes = bs.getDashArray();
             if (dashes != null) {
                 try {
                     this.skijaPaint.setPathEffect(PathEffect.makeDash(dashes, bs.getDashPhase()));
                 } catch (RuntimeException re) {
-                    System.err.println("Unable to create skija paint for dashes: "+Arrays.toString(dashes));
+                    System.err.println("Unable to create skija paint for dashes: " + Arrays.toString(dashes));
                     re.printStackTrace(System.err);
                     this.skijaPaint.setPathEffect(null);
                 }
@@ -1538,7 +1541,7 @@ public final class SkijaGraphics2D extends Graphics2D {
     public void setClip(final Shape shape) {
         setClip(shape, true);
     }
-        
+
     private void setClip(final Shape shape, final boolean clone) {
         if (LOG_ENABLED) {
             LOGGER.debug("setClip({})", shape);
@@ -2316,14 +2319,14 @@ public final class SkijaGraphics2D extends Graphics2D {
             return null;
         }
     }
-    
+
     private Shape _clone(final Shape s) {
         if (s == null) {
             return null;
         }
         if (s instanceof Rectangle2D) {
             final Rectangle2D r = new Rectangle2D.Double();
-            r.setRect((Rectangle2D)s);
+            r.setRect((Rectangle2D) s);
             return r;
         }
         return new Path2D.Double(s, null);
