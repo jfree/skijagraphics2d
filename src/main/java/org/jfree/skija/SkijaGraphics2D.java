@@ -66,9 +66,6 @@ import java.awt.GraphicsConfiguration;
 import java.awt.Image;
 import java.awt.LinearGradientPaint;
 import java.awt.MultipleGradientPaint;
-import static java.awt.MultipleGradientPaint.CycleMethod.NO_CYCLE;
-import static java.awt.MultipleGradientPaint.CycleMethod.REFLECT;
-import static java.awt.MultipleGradientPaint.CycleMethod.REPEAT;
 import java.awt.Paint;
 import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
@@ -1854,7 +1851,7 @@ public final class SkijaGraphics2D extends Graphics2D {
         if (LOG_ENABLED) {
             LOGGER.debug("drawArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
         }
-        draw(arc(x, y, width, height, startAngle, arcAngle));
+        draw(arc(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
     }
 
     /**
@@ -1878,7 +1875,7 @@ public final class SkijaGraphics2D extends Graphics2D {
         if (LOG_ENABLED) {
             LOGGER.debug("fillArc({}, {}, {}, {}, {}, {})", x, y, width, height, startAngle, arcAngle);
         }
-        fill(arc(x, y, width, height, startAngle, arcAngle));
+        fill(arc(x, y, width, height, startAngle, arcAngle, Arc2D.PIE));
     }
 
     /**
@@ -1892,17 +1889,17 @@ public final class SkijaGraphics2D extends Graphics2D {
      * @param height  the height.
      * @param startAngle  the start angle in degrees, 0 = 3 o'clock.
      * @param arcAngle  the angle (anticlockwise) in degrees.
+     * @param arcStyle  the arc style.
      * 
      * @return An arc (never {@code null}).
      */
     private Arc2D arc(int x, int y, int width, int height, int startAngle,
-                      int arcAngle) {
+                      int arcAngle, int arcStyle) {
         if (this.arc == null) {
             this.arc = new Arc2D.Double(x, y, width, height, startAngle,
-                    arcAngle, Arc2D.OPEN);
+                    arcAngle, arcStyle);
         } else {
-            this.arc.setArc(x, y, width, height, startAngle, arcAngle,
-                    Arc2D.OPEN);
+            this.arc.setArc(x, y, width, height, startAngle, arcAngle, arcStyle);
         }
         return this.arc;
     }
